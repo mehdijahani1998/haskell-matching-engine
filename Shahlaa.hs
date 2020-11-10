@@ -1,4 +1,5 @@
 module Shahlaa where
+
 import qualified Data.Set as Set -- From the 'containers' library
 import Text.Printf
 import System.Random
@@ -6,87 +7,94 @@ import Control.Monad
 import Control.Monad.Trans.State
 import Coverage
 import ME
+import MEService
 
 data TestCase = TestCase {
-    input :: [Order]
-  , output :: [Trade]
+    input :: [Request]
+  , output :: [Response]
   , coverage :: [CoverageInfo]
   } deriving (Eq, Show)
 
-type SysState = (OrderBook, [Trade], [CoverageInfo])
-initSysState :: SysState
-initSysState = (OrderBook [] [], [], [])
+type TestState = (MEState, [Response], [CoverageInfo])
+initTestState :: TestState
+initTestState = (initMEState, [], [])
 
-processOrder :: SysState -> Order -> SysState
-processOrder (ob, ts, covs) o =
+handleRequest :: TestState -> Request -> TestState
+handleRequest (s, rss, covs) rq =
   let 
-    ((ob', ts'), cov) = runState (handleNewOrder o ob) noCoverage
+    ((rs, s'), cov) = runState (requestHandler rq s) emptyCoverage
   in
-    (ob', ts ++ ts', covs ++ [cov])
+    (s', rss ++ [rs], covs ++ [cov])
 
-addOracle :: [Order] -> TestCase
-addOracle os = 
+addOracle :: [Request] -> TestCase
+addOracle rqs = 
   let 
-    (ob, ts, covs) = foldl processOrder initSysState os
+    (s, rss, covs) = foldl handleRequest initTestState rqs
   in
-    TestCase os ts covs
+    TestCase rqs rss covs
 
-jSide :: Side -> String
-jSide Sell = "SELL"
-jSide Buy = "BUY "
+fSide :: Side -> String
+fSide Sell = "SELL"
+fSide Buy = "BUY "
 
-jMinQty :: Maybe Quantity -> String
-jMinQty Nothing = ".minQty(Optional.empty())"
-jMinQty (Just q') = printf ".minQty(Optional.of(%d))" q'
-
-jOrder :: Order -> String
-jOrder (LimitOrder i p q s mq) = 
-  printf "\tShahlaaOrder.builder().id(%d).price(%d).qty(%d).side(OrderSide.%s)%s.disclosedQty(Optional.empty()).build(),\n" i p q (jSide s) (jMinQty mq)
-jOrder (IcebergOrder i p q s mq dq ps) = 
-  printf "\tShahlaaOrder.builder().id(%d).price(%d).qty(%d).side(OrderSide.%s)%s.disclosedQty(Optional.of(%d)).build(),\n" i p q (jSide s) (jMinQty mq) ps
+fFAK :: Bool -> String
+fFAK b = if b then "FAK" else "---"
 
 fOptional :: Maybe Int -> Int
 fOptional Nothing = 0
 fOptional (Just n) = n
 
 fOrder :: Order -> String
-fOrder (LimitOrder i p q s mq) = 
-  printf "%d\t%d\t%d\t%s\t%d\t0\n" i p q (jSide s) (fOptional mq)
-fOrder (IcebergOrder i p q s mq dq ps) = 
-  printf "%d\t%d\t%d\t%s\t%d\t%d\n" i p q (jSide s) (fOptional mq) ps
-
-jTrade :: Trade -> String
-jTrade (Trade p q bid sid) = printf "\tnew ShahlaaTrade(%d,%d,%d,%d),\n" p q bid sid
+fOrder (LimitOrder i bi shi p q s mq fak) = 
+  printf "Limit\t%d\t%d\t%d\t%d\t%d\t%s\t%d\t%s\t0" i bi shi p q (fSide s) (fOptional mq) (fFAK fak)
+fOrder (IcebergOrder i bi shi p q s mq fak dq ps) = 
+  printf "Iceberg\t%d\t%d\t%d\t%d\t%d\t%s\t%d\t%s\t%d" i bi shi p q (fSide s) (fOptional mq) (fFAK fak) ps
 
 fTrade :: Trade -> String
-fTrade (Trade p q bid sid) = printf "%d\t%d\t%d\t%d\n" p q bid sid
+fTrade (Trade p q bid sid _ _ _ _) = printf "\t%d\t%d\t%d\t%d\n" p q bid sid
 
-jInput :: [Order] -> String
-jInput q = (foldl (++) "new ShahlaaOrder[] {\n" $ map jOrder q) ++ "}, "
+fTrades :: [Trade] -> String
+fTrades ts = foldl (++) (printf "\tTrades %d\n" $ length ts) $ map fTrade ts
 
-fInput :: [Order] -> String
-fInput q = foldl (++) (printf "%d\n" $ length q) $ map fOrder q
+fRequest :: Request -> String
+fRequest (NewOrderRq o) =
+  printf "NewOrderRq\t%s\n" (fOrder o)
+fRequest (SetCreditRq b c) =
+  printf "SetCreditRq\t%d\t%d\n" b c
+fRequest (SetOwnershipRq sh i) =
+  printf "SetOwnershipRq\t%d\t%d\n" sh i
 
-jOutput :: [Trade] -> String
-jOutput ts = (foldl (++) "new ShahlaaTrade[] {\n" $ map jTrade ts) ++ "}"
+fResponse :: Response -> String
+fResponse (NewOrderRs status ts) =
+  printf "NewOrderRs\t%s\n%s" (if status == Accepted then "Accepted" else "Rejected") (fTrades ts)
+fResponse (SetCreditRs s) =
+  printf "SetCreditRs\t%s\n" (if s then "Successful" else "Failed") 
+fResponse (SetOwnershipRs s) =
+  printf "SetOwnershipRs\t%s\n" (if s then "Successful" else "Failed")
 
-fOutput :: [Trade] -> String
-fOutput ts = foldl (++) (printf "%d\n" $ length ts) $ map fTrade ts
+fInput :: [Request] -> String
+fInput rqs = foldl (++) (printf "%d\n" $ length rqs) $ map fRequest rqs
 
-jTestCase :: TestCase -> String
-jTestCase (TestCase inp out _) = "runTC(" ++ (jInput inp) ++ (jOutput out) ++ ");\n"
+fOutput :: [Response] -> String
+fOutput rss = foldl (++) "" $ map fResponse rss
 
 fTestCase :: TestCase -> String
 fTestCase (TestCase inp out _) = (fInput inp) ++ (fOutput out) ++ "\n"
 
-jTestSuite :: [TestCase] -> String
-jTestSuite = foldl (\acc tc -> acc ++ (jTestCase tc) ++ "\n") ""
-
 fTestSuite :: [TestCase] -> String
 fTestSuite ts = foldl (\acc tc -> acc ++ (fTestCase tc) ++ "\n") (printf "%d\n" $ length ts) ts
 
--- coverageScoreTC :: TestCase -> Int
--- coverageScoreTC = coverageScore . coverage
+coverageSetTC :: [CoverageInfo] -> Set.Set CoverageItem
+coverageSetTC = Set.fromList . concat
 
--- avgCoverageScoreTS :: [TestCase] -> Double
--- avgCoverageScoreTS ts = (fromIntegral $ sum $ map coverageScoreTC ts) / (fromIntegral $ length ts)
+fCoverage :: [CoverageInfo] -> String
+fCoverage cs = unwords $ Set.elems $ coverageSetTC cs
+
+fCoverageInOrder :: [CoverageInfo] -> String
+fCoverageInOrder cs = unwords $ concat cs
+
+coverageScoreTC :: TestCase -> Int
+coverageScoreTC = coverageScore . concat . coverage
+
+avgCoverageScoreTS :: [TestCase] -> Double
+avgCoverageScoreTS ts = (fromIntegral $ sum $ map coverageScoreTC ts) / (fromIntegral $ length ts)

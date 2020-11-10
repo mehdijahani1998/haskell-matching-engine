@@ -1,12 +1,12 @@
 module Coverage where
 import Control.Monad.Trans.State
-import Data.Set as Set -- From the 'containers' library
+import Data.Set as Set
 
 type CoverageItem = String
 type CoverageInfo = [CoverageItem]
 
-noCoverage :: CoverageInfo
-noCoverage = []
+emptyCoverage :: CoverageInfo
+emptyCoverage = []
 
 coverageScore :: CoverageInfo -> Int
 coverageScore = Set.size . Set.fromList

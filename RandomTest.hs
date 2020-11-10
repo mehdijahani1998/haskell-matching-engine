@@ -1,57 +1,122 @@
 module Main where
 import qualified Data.Set as Set
+import qualified Data.Map as Map
 import Text.Printf
 import System.Random
 import ME
+import MEService
 import Shahlaa
 
-genRandLimitOrder :: OrderID -> Price -> Quantity -> IO Order
-genRandLimitOrder newoid maxPrice maxQty = 
+data TCGenSpec = TCGenSpec 
+  { brokerCount :: Int
+  , minCredit :: Int
+  , maxCredit :: Int
+  , shareholderCount :: Int
+  , minPercentage :: Int
+  , maxPercentage :: Int
+  , maxPrice :: Int
+  , maxQty :: Int
+  , orderCount :: Int
+  , orderPercentageWithMinQty :: Int
+  , icebergPercentage :: Int
+  , fakPercentage :: Int
+  } deriving (Show, Eq)
+
+genRandSetCreditRq :: BrokerID -> TCGenSpec -> IO Request
+genRandSetCreditRq brokerID g = 
+  do { credit <- randomRIO (minCredit g, maxCredit g)
+     ; return (SetCreditRq brokerID credit)
+     }
+
+genRandSetCreditRqs :: TCGenSpec -> IO [Request]
+genRandSetCreditRqs g = 
+  sequence [ genRandSetCreditRq i g | i <- [1..(brokerCount g)] ]
+  
+genRandSetOwnershipRq :: ShareholderID -> TCGenSpec -> IO Request
+genRandSetOwnershipRq shareholderID g = 
+  do { percentage <- randomRIO (minPercentage g, maxPercentage g)
+     ; return (SetOwnershipRq shareholderID percentage)
+     }
+
+genRandSetOwnershipRqs :: TCGenSpec -> IO [Request]
+genRandSetOwnershipRqs g = 
+  sequence [ genRandSetOwnershipRq i g | i <- [1..(shareholderCount g)] ]
+
+genRandLimitOrder :: OrderID -> TCGenSpec -> IO Order
+genRandLimitOrder newoid g = 
   do { s <- randomIO :: IO Bool
-     ; p <- randomRIO (1, maxPrice)
-     ; q <- randomRIO (1, maxQty)
-     ; hasMQ <- randomIO :: IO Bool
+     ; p <- randomRIO (1, maxPrice g)
+     ; q <- randomRIO (1, maxQty g)
+     ; mqPerc <- randomRIO (0, 99)
+     ; fakPerc <- randomRIO (0, 99)
      ; m <- randomRIO (1, q)
-     ; return (limitOrder newoid p q (if s then Buy else Sell) (if hasMQ then Just m else Nothing))
+     ; bi <- randomRIO (1, brokerCount g)
+     ; shi <- randomRIO (1, shareholderCount g)
+     ; return (limitOrder newoid bi shi p q (if s then Buy else Sell) (if mqPerc < (orderPercentageWithMinQty g) then Just m else Nothing) (fakPerc < (fakPercentage g)))
   }
 
-genRandIcebergOrder :: OrderID -> Price -> Quantity -> IO Order
-genRandIcebergOrder newoid maxPrice maxQty = 
+genRandIcebergOrder :: OrderID -> TCGenSpec -> IO Order
+genRandIcebergOrder newoid g = 
   do { s <- randomIO :: IO Bool
-     ; p <- randomRIO (1, maxPrice)
-     ; q <- randomRIO (1, maxQty)
-     ; hasMQ <- randomIO :: IO Bool
+     ; p <- randomRIO (1, maxPrice g)
+     ; q <- randomRIO (1, maxQty g)
+     ; mqPerc <- randomRIO (0, 99)
+     ; fakPerc <- randomRIO (0, 99)
      ; m <- randomRIO (1, q)
-     ; ps <- randomRIO (1, q)
-     ; return (icebergOrder newoid p q (if s then Buy else Sell) (if hasMQ then Just m else Nothing) ps ps)
+     ; bi <- randomRIO (1, brokerCount g)
+     ; shi <- randomRIO (1, shareholderCount g)
+     ; ps <- randomRIO (1, max 1 (q `div` 2))
+     ; return (icebergOrder newoid bi shi p q (if s then Buy else Sell) (if mqPerc <= (orderPercentageWithMinQty g) then Just m else Nothing) (fakPerc < (fakPercentage g)) ps ps)
   }
 
-genRandOrder :: OrderID -> Price -> Quantity -> IO Order
-genRandOrder newoid maxPrice maxQty =
-  do { isIceberg <- randomIO :: IO Bool
-     ; if isIceberg then 
-         genRandIcebergOrder newoid maxPrice maxQty
+genRandOrder :: OrderID -> TCGenSpec -> IO Order
+genRandOrder newoid g =
+  do { icebergPerc <- randomRIO (0, 100)
+     ; if icebergPerc < (icebergPercentage g) then 
+         genRandIcebergOrder newoid g
        else
-         genRandLimitOrder newoid maxPrice maxQty
+         genRandLimitOrder newoid g
   }
 
-genRandOrders :: OrderID -> Price -> Quantity -> Int -> IO [Order]
-genRandOrders newoid maxPrice maxQty n =
-  sequence $ take n [genRandOrder i maxPrice maxQty | i <- [newoid..]]
+genRandNewOrderRq :: OrderID -> TCGenSpec -> IO Request
+genRandNewOrderRq newoid g = do 
+  { o <- genRandOrder newoid g 
+  ; return (NewOrderRq o)
+  }
 
-genRandTestCase :: Price -> Quantity -> Int -> IO TestCase
-genRandTestCase maxPrice maxQty n = 
-  do { inp <- genRandOrders 1 maxPrice maxQty n
-     ; return (addOracle inp)
+genRandNewOrderRqs :: OrderID -> TCGenSpec -> IO [Request]
+genRandNewOrderRqs newoid g =
+  sequence $ take (orderCount g) [genRandNewOrderRq i g | i <- [newoid..]]
+
+genRandTestCase :: TCGenSpec -> IO TestCase
+genRandTestCase g =
+  do { setCreditRqs <- genRandSetCreditRqs g 
+     ; setOwnershipRqs <- genRandSetOwnershipRqs g
+     ; newOrderRqs <- genRandNewOrderRqs 1 g
+     ; return (addOracle (setCreditRqs ++ setOwnershipRqs ++ newOrderRqs))
   }
     
-genRandTestSuite :: Price -> Quantity -> Int -> Int -> IO [TestCase]
-genRandTestSuite maxPrice maxQty tcSize tsSize =
-  sequence $ [genRandTestCase maxPrice maxQty tcSize | i <- [0..(tsSize-1)]]
+genRandTestSuite :: Int -> TCGenSpec -> IO [TestCase]
+genRandTestSuite testSuiteSize g =
+  sequence $ [ genRandTestCase g | i <- [0..(testSuiteSize-1)]]
 
 main = do
   setStdGen (mkStdGen 42)   -- optional
-  o <- genRandTestSuite 10 10 10 5
+  o <- genRandTestSuite 1 -- number of test cases in the suite
+    TCGenSpec {
+      brokerCount = 5,
+      minCredit = 50,
+      maxCredit = 200,
+      shareholderCount = 5,
+      minPercentage = 5,
+      maxPercentage = 20,
+      maxPrice = 10,
+      maxQty = 10,
+      orderCount = 100,
+      orderPercentageWithMinQty = 30,
+      icebergPercentage = 30,
+      fakPercentage = 20
+    }
   -- mapM (print . coverage) o
   -- mapM (print . Set.fromList . coverage) o
   -- mapM (print . coverageScoreTC) o
