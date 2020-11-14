@@ -52,7 +52,12 @@ genRandLimitOrder newoid g =
      ; m <- randomRIO (1, q)
      ; bi <- randomRIO (1, brokerCount g)
      ; shi <- randomRIO (1, shareholderCount g)
-     ; return (limitOrder newoid bi shi p q (if s then Buy else Sell) (if mqPerc < (orderPercentageWithMinQty g) then Just m else Nothing) (fakPerc < (fakPercentage g)))
+     ; return (
+        let hasMQ = mqPerc < (orderPercentageWithMinQty g) in
+          limitOrder newoid bi shi p q (if s then Buy else Sell) 
+                     (if hasMQ then Just m else Nothing) 
+                     ((not hasMQ) && (fakPerc < (fakPercentage g)))
+        )
   }
 
 genRandIcebergOrder :: OrderID -> TCGenSpec -> IO Order
@@ -61,12 +66,11 @@ genRandIcebergOrder newoid g =
      ; p <- randomRIO (1, maxPrice g)
      ; q <- randomRIO (1, maxQty g)
      ; mqPerc <- randomRIO (0, 99)
-     ; fakPerc <- randomRIO (0, 99)
      ; m <- randomRIO (1, q)
      ; bi <- randomRIO (1, brokerCount g)
      ; shi <- randomRIO (1, shareholderCount g)
      ; ps <- randomRIO (1, max 1 (q `div` 2))
-     ; return (icebergOrder newoid bi shi p q (if s then Buy else Sell) (if mqPerc <= (orderPercentageWithMinQty g) then Just m else Nothing) (fakPerc < (fakPercentage g)) ps ps)
+     ; return (icebergOrder newoid bi shi p q (if s then Buy else Sell) (if mqPerc <= (orderPercentageWithMinQty g) then Just m else Nothing) False ps ps)
   }
 
 genRandOrder :: OrderID -> TCGenSpec -> IO Order
