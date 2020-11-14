@@ -23,7 +23,7 @@ updateOwnershipInfo ts (MEState ob ci oi) =
    
 updateOwnership :: OwnershipInfo -> Trade -> OwnershipInfo
 updateOwnership oi t =
-  adjust (+ 1) bshid $ adjust (\v -> v - q) sshid oi
+  adjust (+ q) bshid $ adjust (\v -> v - q) sshid oi
   where
     q = quantityTraded t
     bshid = buyerShId t
