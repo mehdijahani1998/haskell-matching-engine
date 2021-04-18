@@ -11,12 +11,15 @@ main :: IO()
 main = do
     args <- getArgs
 
-    when (length args /= 1) ( do
+    when (length args /= 2) ( do
         progName <- getProgName
-        hPutStrLn stderr $ "Usage:\t./" ++ progName ++ " input_file"
+        hPutStrLn stderr $ "Usage:\t./" ++ progName ++ " --trades|--traces <input_file>"
         exitFailure
         )
-    let addr = head args
+    let func = head args
+    let addr = args !! 1
+    when (func /= "--trades" && func /= "--traces")
+        $ error $ "Wrong func " ++ func
 
     handle <- openFile addr ReadMode
     contents <- hGetContents handle
@@ -35,9 +38,12 @@ main = do
     let orders = [genOrderRq i $ words rawOrder | (i, rawOrder) <- indexed rawOrders]
 
     let tc = addOracle $ fixtures ++ orders
-    -- putStrLn $ fTestCase tc
-    -- putStrLn $ fCoverageInOrder $ coverage tc
-    putStrLn $ fCoverage $ coverage tc
+
+    if func == "--trades"
+        then putStrLn $ fTestCase tc
+        else putStrLn $ fCoverage $ coverage tc
+        -- else putStrLn $ fCoverageInOrder $ coverage tc
+    
     hClose handle
 
 
