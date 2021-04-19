@@ -67,7 +67,10 @@ genSetOwnershipRq spec = let
     in req
 
 genOrderRq :: OrderID -> [String] -> Request
-genOrderRq newoid spec = NewOrderRq $ genOrder newoid spec
+genOrderRq newoid (t:spec)
+    | t == "NewOrderRq" = NewOrderRq $ genOrder newoid spec
+    | t == "CancelOrderRq" = genCancelOrderRq newoid spec
+    | otherwise = error $ "Invalid Order Request type " ++ t
 
 
 genOrder :: OrderID -> [String] -> Order
@@ -86,3 +89,11 @@ genOrder newoid spec = let
             then icebergOrder newoid brokerId shareholderID price qty (if isBuy then Buy else Sell) (if hasMQ then Just minQty else Nothing) isFAK disclosedQty disclosedQty
             else limitOrder newoid brokerId shareholderID price qty (if isBuy then Buy else Sell) (if hasMQ then Just minQty else Nothing) isFAK
     in ord
+
+genCancelOrderRq :: OrderID -> [String] -> Request
+genCancelOrderRq newoid spec = let
+        oid = read $ spec !! 0 :: OrderID
+        isBuy = read $ spec !! 1 :: Bool
+        side = if isBuy then Buy else Sell
+        rq = CancelOrderRq newoid oid side
+    in rq

@@ -71,6 +71,10 @@ initMEState = MEState (OrderBook [] []) Map.empty Map.empty
 
 data Request = NewOrderRq
   { order :: Order
+  } | CancelOrderRq
+  { cancelRqId :: OrderID
+  , cancelOid :: OrderID
+  , cancelSide :: Side
   } | SetCreditRq 
   { broker :: BrokerID
   , credit :: Int
@@ -79,11 +83,13 @@ data Request = NewOrderRq
   , shares :: Int
   } deriving (Show, Eq)
 
-data NewOrderResponseStatus = Accepted | Rejected deriving (Show, Eq)
+data OrderResponseStatus = Accepted | Rejected deriving (Show, Eq)
 
 data Response = NewOrderRs
-  { status :: NewOrderResponseStatus
+  { status :: OrderResponseStatus
   , trades :: [Trade]
+  } | CancelOrderRs
+  { status :: OrderResponseStatus
   } | SetCreditRs
   { success :: Bool
   } | SetOwnershipRs
@@ -127,10 +133,19 @@ removeOrderFromQueue :: Order -> OrderQueue -> OrderQueue
 removeOrderFromQueue o oq =
   List.deleteBy (\o1 o2 -> oid o1 == oid o2) o oq
 
+removeOrderFromQueueByID :: OrderID -> OrderQueue -> OrderQueue
+removeOrderFromQueueByID oidToRemove oq =
+  List.filter (\o -> oid o /= oidToRemove) oq
+
 removeOrderFromOrderBook :: Order -> OrderBook -> OrderBook
 removeOrderFromOrderBook o (OrderBook bq sq)
   | side o == Buy = OrderBook (removeOrderFromQueue o bq) sq
   | side o == Sell = OrderBook bq (removeOrderFromQueue o sq)
+
+removeOrderFromOrderBookByID :: OrderID -> Side -> OrderBook -> OrderBook
+removeOrderFromOrderBookByID oid side (OrderBook bq sq)
+  | side == Buy = OrderBook (removeOrderFromQueueByID oid bq) sq
+  | side == Sell = OrderBook bq (removeOrderFromQueueByID oid sq)
 
 queuesBefore :: Order -> Order -> Bool
 queuesBefore o o'
@@ -240,4 +255,8 @@ matchNewOrder o ob
       case rem of
         Nothing -> (OrderBook bq (sellQueue ob), ts) `covers` "MNO-3"
         Just o' -> (enqueue o' $ OrderBook bq (sellQueue ob), ts) `covers` "MNO-4"
-        
+
+cancelOrder :: OrderID -> Side -> OrderBook -> Coverage OrderBook
+cancelOrder oid side ob = do
+  let ob' = removeOrderFromOrderBookByID oid side ob
+  ob' `covers` "CO-1"
