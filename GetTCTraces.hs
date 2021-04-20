@@ -41,8 +41,8 @@ main = do
 
     if func == "--trades"
         then putStrLn $ fTestCase tc
-        else putStrLn $ fCoverage $ coverage tc
-        -- else putStrLn $ fCoverageInOrder $ coverage tc
+        -- else putStrLn $ fCoverage $ coverage tc
+        else putStrLn $ fCoverageInOrder $ coverage tc
     
     hClose handle
 
