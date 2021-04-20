@@ -41,7 +41,7 @@ updateBuyerCredit :: Order -> [Trade] -> MEState -> MEState
 updateBuyerCredit buyOrder ts s@(MEState ob ci si) =
   let
     buyerId = brid buyOrder
-    newCredit = ci Map.! buyerId - (creditSpentByBuyer buyerId ts) + (creditBlocked buyerId buyOrder s)
+    newCredit = ci Map.! buyerId - (creditSpentByBuyer buyerId ts) - (creditBlocked buyerId buyOrder s)
   in 
     (MEState ob (Map.insert buyerId newCredit ci) si)
 
