@@ -1,6 +1,7 @@
 module MEService where
 
 import Data.Map
+import Data.Maybe
 import Coverage
 import ME
 import Ownership
@@ -15,9 +16,10 @@ newOrderMatcher (NewOrderRq o) s = do
 
 
 orderCanceller :: Handler
-orderCanceller (CancelOrderRq rqid oid side) s = do
-  ob <- cancelOrder oid side (orderBook s)
-  return (CancelOrderRs Accepted, s { orderBook = ob})
+orderCanceller (CancelOrderRq _ oid side) s = do
+  (ob, o) <- cancelOrder oid side (orderBook s)
+  let status = if isNothing o then Rejected else Accepted
+  return (CancelOrderRs status o, s { orderBook = ob})
 
 newOrderHandler :: Handler
 newOrderHandler = 
@@ -29,6 +31,8 @@ newOrderHandler =
 
 cancelOrderHandler :: Handler
 cancelOrderHandler =
+  creditLimitProc $ 
+  (ownershipCheck 20) $ 
   orderCanceller
 
 requestHandler :: Handler

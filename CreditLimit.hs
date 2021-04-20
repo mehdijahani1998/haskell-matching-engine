@@ -54,6 +54,24 @@ updateSellersCredit ts (MEState ob ci si) =
   in
     (MEState ob ci' si)
 
+updateCreditInfoOnCancel :: Maybe Order -> MEState -> MEState
+updateCreditInfoOnCancel (Just order) s =
+    if side order == Buy then 
+      releaseBuyerBlockedCredit order s
+    else
+      s
+
+updateCreditInfoOnCancel Nothing s =
+      s
+
+releaseBuyerBlockedCredit :: Order -> MEState -> MEState
+releaseBuyerBlockedCredit buyOrder s@(MEState ob ci si) =
+  let
+    buyerId = brid buyOrder
+    newCredit = ci Map.! buyerId + (creditBlocked buyerId buyOrder s)
+  in 
+    (MEState ob (Map.insert buyerId newCredit ci) si)
+
 creditLimitProc :: Decorator
 creditLimitProc handler = 
   \rq s ->
@@ -64,6 +82,10 @@ creditLimitProc handler =
             (rs, updateCreditInfo o (trades rs) s') `covers` "CLP1"
           else
             (NewOrderRs Rejected [], s) `covers` "CLP2"
+        }
+      (CancelOrderRq rqid oid side) -> do
+        { (rs, s') <- handler rq s
+        ; (rs, updateCreditInfoOnCancel (cancelledOrder rs) s') `covers` "CLP3"
         }
       _ -> handler rq s
 

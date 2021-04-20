@@ -15,6 +15,10 @@ ownershipCheck maxOwnership handler =
           }
         else
           (NewOrderRs Rejected [], s) `covers` "OSC2"
+      (CancelOrderRq rqid oid side) -> do
+        { (rs, s') <- handler rq s
+        ; (rs, s') `covers` "OSC3"
+        }
       _ -> handler rq s
 
 updateOwnershipInfo :: [Trade] -> MEState -> MEState

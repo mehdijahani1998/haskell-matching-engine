@@ -90,6 +90,7 @@ data Response = NewOrderRs
   , trades :: [Trade]
   } | CancelOrderRs
   { status :: OrderResponseStatus
+  , cancelledOrder :: Maybe Order
   } | SetCreditRs
   { success :: Bool
   } | SetOwnershipRs
@@ -133,19 +134,22 @@ removeOrderFromQueue :: Order -> OrderQueue -> OrderQueue
 removeOrderFromQueue o oq =
   List.deleteBy (\o1 o2 -> oid o1 == oid o2) o oq
 
-removeOrderFromQueueByID :: OrderID -> OrderQueue -> OrderQueue
-removeOrderFromQueueByID oidToRemove oq =
-  List.filter (\o -> oid o /= oidToRemove) oq
+findOrderFromQueueByID :: OrderID -> OrderQueue -> Maybe Order
+findOrderFromQueueByID oidToRemove oq = do
+  case filtered of
+    h:t -> Just h
+    otherwise -> Nothing
+  where filtered = List.filter (\o -> oid o == oidToRemove) oq
 
 removeOrderFromOrderBook :: Order -> OrderBook -> OrderBook
 removeOrderFromOrderBook o (OrderBook bq sq)
   | side o == Buy = OrderBook (removeOrderFromQueue o bq) sq
   | side o == Sell = OrderBook bq (removeOrderFromQueue o sq)
 
-removeOrderFromOrderBookByID :: OrderID -> Side -> OrderBook -> OrderBook
-removeOrderFromOrderBookByID oid side (OrderBook bq sq)
-  | side == Buy = OrderBook (removeOrderFromQueueByID oid bq) sq
-  | side == Sell = OrderBook bq (removeOrderFromQueueByID oid sq)
+findOrderFromOrderBookByID :: OrderID -> Side -> OrderBook ->  Maybe Order
+findOrderFromOrderBookByID oid side (OrderBook bq sq)
+  | side == Buy = findOrderFromQueueByID oid bq
+  | side == Sell = findOrderFromQueueByID oid sq
 
 queuesBefore :: Order -> Order -> Bool
 queuesBefore o o'
@@ -256,7 +260,9 @@ matchNewOrder o ob
         Nothing -> (OrderBook bq (sellQueue ob), ts) `covers` "MNO-3"
         Just o' -> (enqueue o' $ OrderBook bq (sellQueue ob), ts) `covers` "MNO-4"
 
-cancelOrder :: OrderID -> Side -> OrderBook -> Coverage OrderBook
+cancelOrder :: OrderID -> Side -> OrderBook -> Coverage (OrderBook, Maybe Order)
 cancelOrder oid side ob = do
-  let ob' = removeOrderFromOrderBookByID oid side ob
-  ob' `covers` "CO-1"
+  case findOrderFromOrderBookByID oid side ob of
+    Just o -> (ob', Just o) `covers` "CO-1"
+      where ob' = removeOrderFromOrderBook o ob
+    Nothing -> (ob, Nothing) `covers` "CO-2"
