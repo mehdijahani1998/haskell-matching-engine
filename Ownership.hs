@@ -5,21 +5,19 @@ import Coverage
 import ME
 
 ownershipCheck :: Int -> Decorator
-ownershipCheck maxOwnership handler =
-  \rq s ->
-    case rq of
-      (NewOrderRq o) ->
-        if ownershipPreCheck maxOwnership o s then do
-          { (rs, s') <- handler rq s
-          ; (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC1"
-          }
+ownershipCheck maxOwnership handler rq s = case rq of
+  (NewOrderRq o) -> do  
+    (rs, s') <- handler rq s
+    case status rs of
+      Accepted ->  if ownershipPreCheck maxOwnership o s then do
+          (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC1"
         else
           (NewOrderRs Rejected [], s) `covers` "OSC2"
-      (CancelOrderRq rqid oid side) -> do
-        { (rs, s') <- handler rq s
-        ; (rs, s') `covers` "OSC3"
-        }
-      _ -> handler rq s
+      Rejected -> (rs, s') `covers` "OSC3"
+  (CancelOrderRq rqid oid side) -> do
+    (rs, s') <- handler rq s
+    (rs, s') `covers` "OSC4"
+  _ -> handler rq s
 
 updateOwnershipInfo :: [Trade] -> MEState -> MEState
 updateOwnershipInfo ts (MEState ob ci oi) =
