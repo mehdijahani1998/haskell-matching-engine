@@ -2,12 +2,14 @@ module MEService where
 
 import Data.Map
 import Data.Maybe
-import Coverage
 import ME
 import Ownership
 import MinQuantity
 import FillAndKill
 import CreditLimit
+
+ownershipUpperLimit :: Int
+ownershipUpperLimit = 20
 
 newOrderMatcher :: Handler
 newOrderMatcher (NewOrderRq o) s = do
@@ -26,13 +28,13 @@ newOrderHandler =
   creditLimitProc $ 
   fillAndKillProc $ 
   minQuantityCheck $ 
-  (ownershipCheck 20) $ 
+  ownershipCheck ownershipUpperLimit $ 
   newOrderMatcher
 
 cancelOrderHandler :: Handler
 cancelOrderHandler =
   creditLimitProc $ 
-  (ownershipCheck 20) $ 
+  ownershipCheck ownershipUpperLimit $ 
   orderCanceller
 
 requestHandler :: Handler
