@@ -73,19 +73,16 @@ releaseBuyerBlockedCredit buyOrder s@(MEState ob ci si) =
     (MEState ob (Map.insert buyerId newCredit ci) si)
 
 creditLimitProc :: Decorator
-creditLimitProc handler = 
-  \rq s ->
-    case rq of
-      (NewOrderRq o) -> do
-        { (rs, s') <- handler rq s
-        ; if creditLimitCheck o s (trades rs) s' then
+creditLimitProc handler rq s = case rq of
+    (NewOrderRq o) -> do
+      (rs, s') <- handler rq s
+      case status rs of
+        Accepted -> if creditLimitCheck o s (trades rs) s' then
             (rs, updateCreditInfo o (trades rs) s') `covers` "CLP1"
           else
             (NewOrderRs Rejected [], s) `covers` "CLP2"
-        }
-      (CancelOrderRq rqid oid side) -> do
-        { (rs, s') <- handler rq s
-        ; (rs, updateCreditInfoOnCancel (cancelledOrder rs) s') `covers` "CLP3"
-        }
-      _ -> handler rq s
-
+        Rejected -> (rs, s') `covers` "CLP3"
+    (CancelOrderRq rqid oid side) -> do
+      (rs, s') <- handler rq s
+      (rs, updateCreditInfoOnCancel (cancelledOrder rs) s') `covers` "CLP4"
+    _ -> handler rq s
