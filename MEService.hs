@@ -23,6 +23,15 @@ orderCanceller (CancelOrderRq _ oid side) s = do
   let status = if isNothing o then Rejected else Accepted
   return (CancelOrderRs status o, s { orderBook = ob})
 
+orderReplacer :: Handler
+orderReplacer (ReplaceOrderRq oldoid o) s = do
+  (ob, oldo) <- cancelOrder oldoid (side o) (orderBook s)
+  if isNothing oldo then
+    return (ReplaceOrderRs Rejected Nothing [], s)
+    else do
+      (ob', ts) <- matchNewOrder o ob
+      return (ReplaceOrderRs Accepted oldo ts, s { orderBook = ob'})
+
 newOrderHandler :: Handler
 newOrderHandler = 
   creditLimitProc $ 
@@ -37,12 +46,19 @@ cancelOrderHandler =
   ownershipCheck ownershipUpperLimit $ 
   orderCanceller
 
+replaceOrderHandler :: Handler
+replaceOrderHandler = 
+    orderReplacer -- FIXME
+
 requestHandler :: Handler
 requestHandler rq@(NewOrderRq o) s =
   newOrderHandler rq s
 
 requestHandler rq@(CancelOrderRq rqid oid side) s =
   cancelOrderHandler rq s
+
+requestHandler rq@(ReplaceOrderRq oldoid o) s =
+  replaceOrderHandler rq s
 
 requestHandler (SetCreditRq b c) s = do
   return (SetCreditRs True, s { creditInfo = (insert b c (creditInfo s)) })

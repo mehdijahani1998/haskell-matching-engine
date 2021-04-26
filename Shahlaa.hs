@@ -58,9 +58,11 @@ fTrades ts = foldl (++) (printf "\tTrades %d\n" $ length ts) $ map fTrade ts
 
 fRequest :: Request -> String
 fRequest (NewOrderRq o) =
-  printf "NewOrderRq\t%s\n" (fOrder o)
+  printf "NewOrderRq\t\t%s\n" $ fOrder o
 fRequest (CancelOrderRq rqid oid side) =
-  printf "CancelOrderRq\t%d\t%d\t%s\n" rqid oid $ fSide side
+  printf "CancelOrderRq\t%d\t\t%d\t\t\t\t\t%s\n" oid rqid $ fSide side
+fRequest (ReplaceOrderRq oldoid o) =
+  printf "ReplaceOrderRq\t%d\t%s\n" oldoid $ fOrder o
 fRequest (SetCreditRq b c) =
   printf "SetCreditRq\t%d\t%d\n" b c
 fRequest (SetOwnershipRq sh i) =
@@ -71,6 +73,8 @@ fResponse (NewOrderRs status ts) =
   printf "NewOrderRs\t%s\n%s" (if status == Accepted then "Accepted" else "Rejected") (fTrades ts)
 fResponse (CancelOrderRs status _) =
   printf "CancelOrderRs\t%s\n" (if status == Accepted then "Accepted" else "Rejected")
+fResponse (ReplaceOrderRs status _ ts) =
+  printf "ReplaceOrderRs\t%s\n%s" (if status == Accepted then "Accepted" else "Rejected") (fTrades ts)
 fResponse (SetCreditRs s) =
   printf "SetCreditRs\t%s\n" (if s then "Successful" else "Failed") 
 fResponse (SetOwnershipRs s) =

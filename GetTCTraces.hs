@@ -69,6 +69,7 @@ genSetOwnershipRq spec = let
 genOrderRq :: OrderID -> [String] -> Request
 genOrderRq newoid (t:spec)
     | t == "NewOrderRq" = NewOrderRq $ genOrder newoid spec
+    | t == "ReplaceOrderRq" = genReplaceOrderRq newoid spec
     | t == "CancelOrderRq" = genCancelOrderRq newoid spec
     | otherwise = error $ "Invalid Order Request type " ++ t
 
@@ -97,3 +98,11 @@ genCancelOrderRq newoid spec = let
         side = if isBuy then Buy else Sell
         rq = CancelOrderRq newoid oid side
     in rq
+
+genReplaceOrderRq :: OrderID -> [String] -> Request
+genReplaceOrderRq newoid spec = let
+        oldoid = read $ head spec :: OrderID
+        o = genOrder newoid $ tail spec
+        rq = ReplaceOrderRq oldoid o
+    in rq
+

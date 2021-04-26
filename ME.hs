@@ -72,9 +72,12 @@ initMEState = MEState (OrderBook [] []) Map.empty Map.empty
 data Request = NewOrderRq
   { order :: Order
   } | CancelOrderRq
-  { cancelRqId :: OrderID
-  , cancelOid :: OrderID
-  , cancelSide :: Side
+  { rqId :: OrderID
+  , oldOid :: OrderID
+  , oldSide :: Side
+  } | ReplaceOrderRq
+  { oldOid :: OrderID
+  , order :: Order
   } | SetCreditRq 
   { broker :: BrokerID
   , credit :: Int
@@ -90,7 +93,11 @@ data Response = NewOrderRs
   , trades :: [Trade]
   } | CancelOrderRs
   { status :: OrderResponseStatus
-  , cancelledOrder :: Maybe Order
+  , oldOrder :: Maybe Order
+  } | ReplaceOrderRs
+  { status :: OrderResponseStatus
+  , oldOrder :: Maybe Order
+  , trades :: [Trade]
   } | SetCreditRs
   { success :: Bool
   } | SetOwnershipRs
