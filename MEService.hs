@@ -48,7 +48,9 @@ cancelOrderHandler =
 
 replaceOrderHandler :: Handler
 replaceOrderHandler = 
-    orderReplacer -- FIXME
+  creditLimitProc $ 
+  ownershipCheck ownershipUpperLimit $ 
+  orderReplacer
 
 requestHandler :: Handler
 requestHandler rq@(NewOrderRq o) s =

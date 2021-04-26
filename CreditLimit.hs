@@ -85,4 +85,14 @@ creditLimitProc handler rq s = case rq of
     (CancelOrderRq rqid oid side) -> do
       (rs, s') <- handler rq s
       (rs, updateCreditInfoOnCancel (oldOrder rs) s') `covers` "CLP4"
+    (ReplaceOrderRq oldoid o) -> do
+      (rs, s') <- handler rq s
+      case status rs of
+        Accepted -> do
+          let s'' = updateCreditInfoOnCancel (oldOrder rs) s'
+          if creditLimitCheck o s (trades rs) s'' then
+            (rs, updateCreditInfo o (trades rs) s'') `covers` "CLP6"
+          else
+            (NewOrderRs Rejected [], s) `covers` "CLP7"
+        Rejected -> (rs, s') `covers` "CLP8"
     _ -> handler rq s

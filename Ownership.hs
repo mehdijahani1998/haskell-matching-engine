@@ -14,9 +14,12 @@ ownershipCheck maxOwnership handler rq s = case rq of
         else
           (NewOrderRs Rejected [], s) `covers` "OSC2"
       Rejected -> (rs, s') `covers` "OSC3"
-  (CancelOrderRq rqid oid side) -> do
+  (CancelOrderRq rqid oid side) -> do -- FIXME
     (rs, s') <- handler rq s
     (rs, s') `covers` "OSC4"
+  (ReplaceOrderRq oldoid o) -> do -- FIXME
+    (rs, s') <- handler rq s
+    (rs, s') `covers` "OSC5"
   _ -> handler rq s
 
 updateOwnershipInfo :: [Trade] -> MEState -> MEState
