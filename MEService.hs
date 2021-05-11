@@ -34,9 +34,9 @@ orderReplacer (ReplaceOrderRq oldoid o) s = do
 
 newOrderHandler :: Handler
 newOrderHandler = 
-  creditLimitProc $ 
   fillAndKillProc $ 
   minQuantityCheck $ 
+  creditLimitProc $ 
   ownershipCheck ownershipUpperLimit $ 
   newOrderMatcher
 

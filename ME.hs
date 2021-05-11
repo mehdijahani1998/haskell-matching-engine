@@ -126,13 +126,6 @@ icebergOrder i bi shi p q s m fak dq ps =
   assert (ps > 0) $
   IcebergOrder i bi shi p q s m fak dq ps
 
-totalQuantity :: Side -> ShareholderID -> OrderBook -> Quantity
-totalQuantity side shi ob =
-  sum $
-  map quantity $
-  filter (\o -> shid o == shi) $
-  queue side ob
-
 decQty :: Order -> Quantity -> Order
 decQty (LimitOrder i bi shi p q s mq fak) q' = limitOrder i bi shi p (q - q') s mq fak
 decQty (IcebergOrder i bi shi p q s mq fak dq ps) q' = icebergOrder i bi shi p (q - q') s mq fak (dq -q') ps

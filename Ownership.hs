@@ -56,3 +56,10 @@ ownershipPreCheck maxOwnership o oldOrder (MEState ob _ ownership) =
     Sell -> (quantity o) + (totalQuantity Sell shi ob) - (quantityInQueue oldOrder ob) <= (ownership!shi)
   where
     shi = shid o
+
+totalQuantity :: Side -> ShareholderID -> OrderBook -> Quantity
+totalQuantity side shi ob =
+  sum $
+  Prelude.map quantity $
+  Prelude.filter (\o -> shid o == shi) $
+  queue side ob

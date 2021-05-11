@@ -10,21 +10,22 @@ creditSpentByBuyer buyerId ts =
   map valueTraded $ 
   filter (\t -> sellerBrId t /= buyerId) ts
 
-creditBlocked :: BrokerID -> Order -> MEState -> Int
-creditBlocked buyerId buyOrder afterTradeState =
-  sum $ 
+totalWorth :: Side -> ShareholderID -> OrderBook -> Int
+totalWorth side shi ob =
+  sum $
   map (\o -> price o * quantity o) $ 
-  filter (\o -> oid o == oid buyOrder) $
-  buyQueue $
-  orderBook afterTradeState
+  filter (\o -> shid o == shi) $
+  queue side ob
 
 creditLimitCheck :: Order -> MEState -> [Trade] -> MEState -> Bool
 creditLimitCheck order beforeTradeState ts afterTradeState
   | side order == Buy =
     let
       buyerId = brid order
+      afterTrade = orderBook afterTradeState
+      shi = shid order
     in
-      (creditInfo beforeTradeState) Map.! buyerId >= (creditSpentByBuyer buyerId ts) + (creditBlocked buyerId order afterTradeState)
+      (creditInfo beforeTradeState) Map.! buyerId >= (creditSpentByBuyer buyerId ts) + (totalWorth Buy shi afterTrade)
   | side order == Sell = True
   
 updateCreditInfo :: Order -> [Trade] -> MEState -> MEState
@@ -41,7 +42,7 @@ updateBuyerCredit :: Order -> [Trade] -> MEState -> MEState
 updateBuyerCredit buyOrder ts s@(MEState ob ci si) =
   let
     buyerId = brid buyOrder
-    newCredit = ci Map.! buyerId - (creditSpentByBuyer buyerId ts) - (creditBlocked buyerId buyOrder s)
+    newCredit = ci Map.! buyerId - (creditSpentByBuyer buyerId ts)
   in 
     (MEState ob (Map.insert buyerId newCredit ci) si)
 
@@ -53,24 +54,6 @@ updateSellersCredit ts (MEState ob ci si) =
       filter (\t -> buyerBrId t /= sellerBrId t) ts
   in
     (MEState ob ci' si)
-
-updateCreditInfoOnCancel :: Maybe Order -> MEState -> MEState
-updateCreditInfoOnCancel (Just order) s =
-    if side order == Buy then 
-      releaseBuyerBlockedCredit order s
-    else
-      s
-
-updateCreditInfoOnCancel Nothing s =
-      s
-
-releaseBuyerBlockedCredit :: Order -> MEState -> MEState
-releaseBuyerBlockedCredit buyOrder s@(MEState ob ci si) =
-  let
-    buyerId = brid buyOrder
-    newCredit = ci Map.! buyerId + (creditBlocked buyerId buyOrder s)
-  in 
-    (MEState ob (Map.insert buyerId newCredit ci) si)
 
 creditLimitProc :: Decorator
 creditLimitProc handler rq s = case rq of
@@ -84,14 +67,13 @@ creditLimitProc handler rq s = case rq of
         Rejected -> (rs, s') `covers` "CLP3"
     (CancelOrderRq rqid oid side) -> do
       (rs, s') <- handler rq s
-      (rs, updateCreditInfoOnCancel (oldOrder rs) s') `covers` "CLP4"
+      (rs, s') `covers` "CLP4"
     (ReplaceOrderRq oldoid o) -> do
       (rs, s') <- handler rq s
       case status rs of
         Accepted -> do
-          let s'' = updateCreditInfoOnCancel (oldOrder rs) s'
-          if creditLimitCheck o s (trades rs) s'' then
-            (rs, updateCreditInfo o (trades rs) s'') `covers` "CLP6"
+          if creditLimitCheck o s (trades rs) s' then
+            (rs, updateCreditInfo o (trades rs) s') `covers` "CLP6"
           else
             (NewOrderRs Rejected [], s) `covers` "CLP7"
         Rejected -> (rs, s') `covers` "CLP8"
