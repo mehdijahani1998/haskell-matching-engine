@@ -7,9 +7,14 @@ import Ownership
 import MinQuantity
 import FillAndKill
 import CreditLimit
+import PriceBand
 
 ownershipUpperLimit :: Int
 ownershipUpperLimit = 20
+staticPriceBandUpperLimit :: Int
+staticPriceBandUpperLimit = 12
+staticPriceBandLowerLimit :: Int
+staticPriceBandLowerLimit = 2
 
 newOrderMatcher :: Handler
 newOrderMatcher (NewOrderRq o) s = do
@@ -38,18 +43,21 @@ newOrderHandler =
   minQuantityCheck $ 
   creditLimitProc $ 
   ownershipCheck ownershipUpperLimit $ 
+  pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $ 
   newOrderMatcher
 
 cancelOrderHandler :: Handler
 cancelOrderHandler =
   creditLimitProc $ 
   ownershipCheck ownershipUpperLimit $ 
+  pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $ 
   orderCanceller
 
 replaceOrderHandler :: Handler
 replaceOrderHandler = 
   creditLimitProc $ 
   ownershipCheck ownershipUpperLimit $ 
+  pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $ 
   orderReplacer
 
 requestHandler :: Handler
