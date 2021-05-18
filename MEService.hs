@@ -11,10 +11,10 @@ import PriceBand
 
 ownershipUpperLimit :: Int
 ownershipUpperLimit = 20
-staticPriceBandUpperLimit :: Int
-staticPriceBandUpperLimit = 12
-staticPriceBandLowerLimit :: Int
-staticPriceBandLowerLimit = 2
+staticPriceBandUpperLimit :: Float
+staticPriceBandUpperLimit = 0.9
+staticPriceBandLowerLimit :: Float
+staticPriceBandLowerLimit = 0.9
 
 newOrderMatcher :: Handler
 newOrderMatcher (NewOrderRq o) s = do
@@ -76,4 +76,5 @@ requestHandler (SetCreditRq b c) s = do
 requestHandler (SetOwnershipRq sh i) s = do
   return (SetOwnershipRs True, s { ownershipInfo = (insert sh i (ownershipInfo s)) })
 
-
+requestHandler (SetReferencePriceRq rp) s = do
+  return (SetReferencePriceRs True, s { referencePrice = rp })

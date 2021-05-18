@@ -48,9 +48,11 @@ main = do
 
 
 genFixture :: [String] -> Request
-genFixture spec = if head spec == "SetCreditRq"
-    then genSetCreditRq $ tail spec
-    else genSetOwnershipRq $ tail spec
+genFixture (t:spec)
+    | t == "SetCreditRq" = genSetCreditRq spec
+    | t == "SetOwnershipRq" = genSetOwnershipRq spec
+    | t == "SetReferencePrice" = genSetReferencePriceRq spec
+    | otherwise = error $ "Invalid Fixture Request type " ++ t
 
 genSetCreditRq :: [String] -> Request
 genSetCreditRq spec = let
@@ -64,6 +66,12 @@ genSetOwnershipRq spec = let
         shareholderID = read $ spec !! 0 :: ShareholderID
         credit = read $ spec !! 1 :: Int
         req = SetOwnershipRq shareholderID credit
+    in req
+
+genSetReferencePriceRq :: [String] -> Request
+genSetReferencePriceRq spec = let
+        referencePrice = read $ spec !! 0 :: Int
+        req = SetReferencePriceRq referencePrice
     in req
 
 genOrderRq :: OrderID -> [String] -> Request

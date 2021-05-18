@@ -39,21 +39,21 @@ updateCreditInfo order ts s =
       s'
 
 updateBuyerCredit :: Order -> [Trade] -> MEState -> MEState
-updateBuyerCredit buyOrder ts s@(MEState ob ci si) =
+updateBuyerCredit buyOrder ts s@(MEState ob ci si rp) =
   let
     buyerId = brid buyOrder
     newCredit = ci Map.! buyerId - (creditSpentByBuyer buyerId ts)
   in 
-    (MEState ob (Map.insert buyerId newCredit ci) si)
+    (MEState ob (Map.insert buyerId newCredit ci) si rp)
 
 updateSellersCredit :: [Trade] -> MEState -> MEState
-updateSellersCredit ts (MEState ob ci si) =
+updateSellersCredit ts (MEState ob ci si rp) =
   let
     ci' = 
       foldl (\m t -> Map.insertWith (+) (sellerBrId t) (valueTraded t) m) ci $
       filter (\t -> buyerBrId t /= sellerBrId t) ts
   in
-    (MEState ob ci' si)
+    (MEState ob ci' si rp)
 
 creditLimitProc :: Decorator
 creditLimitProc handler rq s = case rq of

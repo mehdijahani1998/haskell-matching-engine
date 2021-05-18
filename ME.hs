@@ -64,10 +64,11 @@ data MEState = MEState
   { orderBook :: OrderBook
   , creditInfo :: CreditInfo
   , ownershipInfo :: OwnershipInfo
+  , referencePrice :: Price
   } deriving (Show, Eq)
 
 initMEState :: MEState
-initMEState = MEState (OrderBook [] []) Map.empty Map.empty
+initMEState = MEState (OrderBook [] []) Map.empty Map.empty 0
 
 data Request = NewOrderRq
   { order :: Order
@@ -84,6 +85,8 @@ data Request = NewOrderRq
   } | SetOwnershipRq
   { shareholder :: ShareholderID
   , shares :: Int
+  } | SetReferencePriceRq
+  { newReferencePrice :: Int
   } deriving (Show, Eq)
 
 data OrderResponseStatus = Accepted | Rejected deriving (Show, Eq)
@@ -101,6 +104,8 @@ data Response = NewOrderRs
   } | SetCreditRs
   { success :: Bool
   } | SetOwnershipRs
+  { success :: Bool
+  } | SetReferencePriceRs
   { success :: Bool
   } deriving (Show, Eq)
 

@@ -67,6 +67,8 @@ fRequest (SetCreditRq b c) =
   printf "SetCreditRq\t%d\t%d\n" b c
 fRequest (SetOwnershipRq sh i) =
   printf "SetOwnershipRq\t%d\t%d\n" sh i
+fRequest (SetReferencePriceRq rp) =
+  printf "SetReferencePriceRq\t%d\n" rp
 
 fResponse :: Response -> String
 fResponse (NewOrderRs status ts) =
@@ -79,6 +81,8 @@ fResponse (SetCreditRs s) =
   printf "SetCreditRs\t%s\n" (if s then "Successful" else "Failed") 
 fResponse (SetOwnershipRs s) =
   printf "SetOwnershipRs\t%s\n" (if s then "Successful" else "Failed")
+fResponse (SetReferencePriceRs s) =
+  printf "SetReferencePriceRs\t%s\n" (if s then "Successful" else "Failed")
 
 fInput :: [Request] -> String
 fInput rqs = foldl (++) (printf "%d\n" $ length rqs) $ map fRequest rqs

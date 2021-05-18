@@ -3,12 +3,13 @@ module PriceBand where
 import Coverage
 import ME
 
-pricebandCheck :: Int -> Int -> Decorator
+pricebandCheck :: Float -> Float -> Decorator
 pricebandCheck minPriceBand maxPriceBand handler rq s = case rq of
   (NewOrderRq o) -> do  
     (rs, s') <- handler rq s
+    let rp = referencePrice s
     case status rs of
-      Accepted ->  if pricebandPreCheck minPriceBand maxPriceBand o then do
+      Accepted ->  if pricebandPreCheck minPriceBand maxPriceBand rp o then do
           (rs, s') `covers` "PBC1"
         else
           (NewOrderRs Rejected [], s) `covers` "PBC2"
@@ -18,8 +19,9 @@ pricebandCheck minPriceBand maxPriceBand handler rq s = case rq of
     (rs, s') `covers` "PBC4"
   (ReplaceOrderRq oldoid o) -> do
     (rs, s') <- handler rq s
+    let rp = referencePrice s
     case status rs of
-      Accepted ->  if pricebandPreCheck minPriceBand maxPriceBand o then do
+      Accepted ->  if pricebandPreCheck minPriceBand maxPriceBand rp o then do
           (rs, s') `covers` "PBC5"
         else
           (ReplaceOrderRs Rejected Nothing [], s) `covers` "PBC6"
@@ -27,8 +29,10 @@ pricebandCheck minPriceBand maxPriceBand handler rq s = case rq of
   _ -> handler rq s
 
 
-pricebandPreCheck :: Int -> Int -> Order -> Bool
-pricebandPreCheck minPriceBand maxPriceBand o =
-  minPriceBand <= p && p <= maxPriceBand
+pricebandPreCheck :: Float -> Float -> Int -> Order -> Bool
+pricebandPreCheck minPriceBand maxPriceBand referencePrice o =
+  lowerPriceLimit <= p && p <= upperpriceLimit
   where
     p = price o
+    upperpriceLimit = floor $ fromIntegral referencePrice * (1 + maxPriceBand)
+    lowerPriceLimit = ceiling $ fromIntegral referencePrice * (1 - minPriceBand)
