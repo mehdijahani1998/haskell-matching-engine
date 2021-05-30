@@ -1,5 +1,4 @@
 module ME where
-import Text.Printf
 import qualified Data.Map as Map
 import qualified Data.List as List
 import Control.Exception (assert)
@@ -115,6 +114,7 @@ type Decorator = Handler -> Handler
 valueTraded :: Trade -> Int
 valueTraded t = (priceTraded t) * (quantityTraded t)
 
+limitOrder :: OrderID -> BrokerID -> ShareholderID -> Price -> Quantity -> Side -> Maybe Quantity -> Bool -> Order
 limitOrder i bi shi p q s m fak =
   assert (i >= 0) $
   assert (p > 0) $
@@ -122,6 +122,7 @@ limitOrder i bi shi p q s m fak =
   case m of {(Just mq) -> assert (mq > 0); otherwise -> id} $
   LimitOrder i bi shi p q s m fak
 
+icebergOrder :: OrderID -> BrokerID -> ShareholderID -> Price -> Quantity -> Side -> Maybe Quantity -> Bool -> Quantity -> Quantity -> Order
 icebergOrder i bi shi p q s m fak dq ps =
   assert (i >= 0) $
   assert (p > 0) $
@@ -136,18 +137,17 @@ decQty (LimitOrder i bi shi p q s mq fak) q' = limitOrder i bi shi p (q - q') s 
 decQty (IcebergOrder i bi shi p q s mq fak dq ps) q' = icebergOrder i bi shi p (q - q') s mq fak (dq -q') ps
 
 isIceberg :: Order -> Bool
-isIceberg (IcebergOrder _ _ _ _ _ _ _ _ _ _) = True
+isIceberg IcebergOrder {} = True
 
-isIceberg (LimitOrder _ _ _ _ _ _ _ _) = False
+isIceberg LimitOrder {} = False
 
 displayedQty :: Order -> Quantity
-displayedQty (IcebergOrder _ _ _ _ _ _ _ _ _ ps) = ps
+displayedQty order@IcebergOrder {} = peakSize order
 
-displayedQty (LimitOrder _ _ _ _ qty _ _ _) = qty
+displayedQty order@LimitOrder {} = quantity order
 
 removeOrderFromQueue :: Order -> OrderQueue -> OrderQueue
-removeOrderFromQueue o oq =
-  List.deleteBy (\o1 o2 -> oid o1 == oid o2) o oq
+removeOrderFromQueue = List.deleteBy (\ o1 o2 -> oid o1 == oid o2)
 
 replaceOrderInQueue :: OrderID -> Order -> OrderQueue -> OrderQueue
 replaceOrderInQueue ooid o (h:t) = (h':t)
@@ -158,7 +158,7 @@ replaceOrderInQueue ooid o [] = []
 findOrderFromQueueByID :: OrderID -> OrderQueue -> Maybe Order
 findOrderFromQueueByID oidToRemove oq = do
   case filtered of
-    h:t -> Just h
+    (h:_) -> Just h
     otherwise -> Nothing
   where filtered = List.filter (\o -> oid o == oidToRemove) oq
 
@@ -179,8 +179,8 @@ findOrderFromOrderBookByID oid side (OrderBook bq sq)
 
 queuesBefore :: Order -> Order -> Bool
 queuesBefore o o'
-  | (side o == Sell) && (side o' == Sell) = (price o < price o')
-  | (side o == Buy) && (side o' == Buy) = (price o > price o')
+  | side o == Sell && side o' == Sell = price o < price o'
+  | side o == Buy && side o' == Buy = price o > price o'
   | otherwise = error "incomparable orders"
 
 enqueueOrder :: Order -> OrderQueue -> OrderQueue
