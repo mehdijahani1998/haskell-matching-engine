@@ -7,6 +7,7 @@ import ME
 import MEService
 import Shahlaa
 
+
 data TCGenSpec = TCGenSpec 
   { brokerCount :: Int
   , minCredit :: Int
@@ -22,21 +23,25 @@ data TCGenSpec = TCGenSpec
   , fakPercentage :: Int
   } deriving (Show, Eq)
 
+
 genRandSetCreditRq :: BrokerID -> TCGenSpec -> IO Request
 genRandSetCreditRq brokerID g = 
   do { credit <- randomRIO (minCredit g, maxCredit g)
      ; return (SetCreditRq brokerID credit)
      }
 
+
 genRandSetCreditRqs :: TCGenSpec -> IO [Request]
 genRandSetCreditRqs g = 
   sequence [ genRandSetCreditRq i g | i <- [1..(brokerCount g)] ]
-  
+
+
 genRandSetOwnershipRq :: ShareholderID -> TCGenSpec -> IO Request
 genRandSetOwnershipRq shareholderID g = 
   do { percentage <- randomRIO (minPercentage g, maxPercentage g)
      ; return (SetOwnershipRq shareholderID percentage)
      }
+
 
 genRandSetOwnershipRqs :: TCGenSpec -> IO [Request]
 genRandSetOwnershipRqs g = 
@@ -60,6 +65,7 @@ genRandLimitOrder newoid g =
         )
   }
 
+
 genRandIcebergOrder :: OrderID -> TCGenSpec -> IO Order
 genRandIcebergOrder newoid g = 
   do { s <- randomIO :: IO Bool
@@ -73,6 +79,7 @@ genRandIcebergOrder newoid g =
      ; return (icebergOrder newoid bi shi p q (if s then Buy else Sell) (if mqPerc <= (orderPercentageWithMinQty g) then Just m else Nothing) False ps ps)
   }
 
+
 genRandOrder :: OrderID -> TCGenSpec -> IO Order
 genRandOrder newoid g =
   do { icebergPerc <- randomRIO (0, 100)
@@ -82,11 +89,13 @@ genRandOrder newoid g =
          genRandLimitOrder newoid g
   }
 
+
 genRandNewOrderRq :: OrderID -> TCGenSpec -> IO Request
 genRandNewOrderRq newoid g = do 
   { o <- genRandOrder newoid g 
   ; return (NewOrderRq o)
   }
+
 
 genRandNewOrderRqs :: OrderID -> TCGenSpec -> IO [Request]
 genRandNewOrderRqs newoid g =
@@ -99,10 +108,12 @@ genRandTestCase g =
      ; newOrderRqs <- genRandNewOrderRqs 1 g
      ; return (addOracle (setCreditRqs ++ setOwnershipRqs ++ newOrderRqs))
   }
-    
+
+
 genRandTestSuite :: Int -> TCGenSpec -> IO [TestCase]
 genRandTestSuite testSuiteSize g =
   sequence $ [ genRandTestCase g | i <- [0..(testSuiteSize-1)]]
+
 
 main = do
   setStdGen (mkStdGen 42)   -- optional

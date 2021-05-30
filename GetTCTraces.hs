@@ -7,6 +7,7 @@ import Data.List.Index
 import ME
 import Shahlaa
 
+
 main :: IO()
 main = do
     args <- getArgs
@@ -54,25 +55,29 @@ genFixture (t:spec)
     | t == "SetReferencePrice" = genSetReferencePriceRq spec
     | otherwise = error $ "Invalid Fixture Request type " ++ t
 
+
 genSetCreditRq :: [String] -> Request
-genSetCreditRq spec = let
-        brokerID = read $ spec !! 0 :: BrokerID
+genSetCreditRq spec =
+    let brokerID = read $ spec !! 0 :: BrokerID
         credit = read $ spec !! 1 :: Int
         req = SetCreditRq brokerID credit
     in req
 
+
 genSetOwnershipRq :: [String] -> Request
-genSetOwnershipRq spec = let
-        shareholderID = read $ spec !! 0 :: ShareholderID
+genSetOwnershipRq spec =
+    let shareholderID = read $ spec !! 0 :: ShareholderID
         credit = read $ spec !! 1 :: Int
         req = SetOwnershipRq shareholderID credit
     in req
 
+
 genSetReferencePriceRq :: [String] -> Request
-genSetReferencePriceRq spec = let
-        referencePrice = read $ spec !! 0 :: Int
+genSetReferencePriceRq spec =
+    let referencePrice = read $ spec !! 0 :: Int
         req = SetReferencePriceRq referencePrice
     in req
+
 
 genOrderRq :: OrderID -> [String] -> Request
 genOrderRq newoid (t:spec)
@@ -83,8 +88,8 @@ genOrderRq newoid (t:spec)
 
 
 genOrder :: OrderID -> [String] -> Order
-genOrder newoid spec = let
-        brokerId = read $ spec !! 0 :: BrokerID
+genOrder newoid spec =
+    let brokerId = read $ spec !! 0 :: BrokerID
         shareholderID = read $ spec !! 1 :: ShareholderID
         price = read $ spec !! 2 :: Price
         qty = read $ spec !! 3 :: Quantity
@@ -99,18 +104,19 @@ genOrder newoid spec = let
             else limitOrder newoid brokerId shareholderID price qty (if isBuy then Buy else Sell) (if hasMQ then Just minQty else Nothing) isFAK
     in ord
 
+
 genCancelOrderRq :: OrderID -> [String] -> Request
-genCancelOrderRq newoid spec = let
-        oid = read $ spec !! 0 :: OrderID
+genCancelOrderRq newoid spec =
+    let oid = read $ spec !! 0 :: OrderID
         isBuy = read $ spec !! 1 :: Bool
         side = if isBuy then Buy else Sell
         rq = CancelOrderRq newoid oid side
     in rq
 
+
 genReplaceOrderRq :: OrderID -> [String] -> Request
-genReplaceOrderRq newoid spec = let
-        oldoid = read $ head spec :: OrderID
+genReplaceOrderRq newoid spec =
+    let oldoid = read $ head spec :: OrderID
         o = genOrder newoid $ tail spec
         rq = ReplaceOrderRq oldoid o
     in rq
-
