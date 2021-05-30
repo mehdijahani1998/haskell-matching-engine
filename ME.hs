@@ -125,19 +125,35 @@ limitOrder i bi shi p q s m fak =
 icebergOrder i bi shi p q s m fak dq ps =
   assert (i >= 0) $
   assert (p > 0) $
-  assert (q >= 0) $
+  assert (q > 0) $
   case m of {(Just mq) -> assert (mq > 0); otherwise -> id} $
   assert (dq <= q) $
-  assert (ps > 0) $
+  assert (ps > 0 && ps <= dq && ps <= q) $
   IcebergOrder i bi shi p q s m fak dq ps
 
 decQty :: Order -> Quantity -> Order
 decQty (LimitOrder i bi shi p q s mq fak) q' = limitOrder i bi shi p (q - q') s mq fak
 decQty (IcebergOrder i bi shi p q s mq fak dq ps) q' = icebergOrder i bi shi p (q - q') s mq fak (dq -q') ps
 
+isIceberg :: Order -> Bool
+isIceberg (IcebergOrder _ _ _ _ _ _ _ _ _ _) = True
+
+isIceberg (LimitOrder _ _ _ _ _ _ _ _) = False
+
+displayedQty :: Order -> Quantity
+displayedQty (IcebergOrder _ _ _ _ _ _ _ _ _ ps) = ps
+
+displayedQty (LimitOrder _ _ _ _ qty _ _ _) = qty
+
 removeOrderFromQueue :: Order -> OrderQueue -> OrderQueue
 removeOrderFromQueue o oq =
   List.deleteBy (\o1 o2 -> oid o1 == oid o2) o oq
+
+replaceOrderInQueue :: OrderID -> Order -> OrderQueue -> OrderQueue
+replaceOrderInQueue ooid o (h:t) = (h':t)
+  where h' = if oid h == ooid then o else h
+
+replaceOrderInQueue ooid o [] = []
 
 findOrderFromQueueByID :: OrderID -> OrderQueue -> Maybe Order
 findOrderFromQueueByID oidToRemove oq = do
@@ -150,6 +166,11 @@ removeOrderFromOrderBook :: Order -> OrderBook -> OrderBook
 removeOrderFromOrderBook o (OrderBook bq sq)
   | side o == Buy = OrderBook (removeOrderFromQueue o bq) sq
   | side o == Sell = OrderBook bq (removeOrderFromQueue o sq)
+
+replaceOrderInOrderBook :: OrderID -> Order -> OrderBook -> OrderBook
+replaceOrderInOrderBook ooid o (OrderBook bq sq)
+  | side o == Buy = OrderBook (replaceOrderInQueue ooid o bq) sq
+  | side o == Sell = OrderBook bq (replaceOrderInQueue ooid o sq)
 
 findOrderFromOrderBookByID :: OrderID -> Side -> OrderBook ->  Maybe Order
 findOrderFromOrderBookByID oid side (OrderBook bq sq)
@@ -271,3 +292,23 @@ cancelOrder oid side ob = do
     Just o -> (ob', Just o) `covers` "CO-1"
       where ob' = removeOrderFromOrderBook o ob
     Nothing -> (ob, Nothing) `covers` "CO-2"
+
+
+replaceOrderInPlace :: OrderID -> Order -> OrderBook -> Coverage (OrderBook, [Trade])
+replaceOrderInPlace ooid o ob = (replaceOrderInOrderBook ooid o ob, []) `covers` "ROIP-1"
+
+shouldReplaceInPlace :: Order -> Order -> Bool
+shouldReplaceInPlace oldOrder order
+  | displayedQty order > displayedQty oldOrder = False
+  | price order /= price oldOrder = False
+  | otherwise = True
+
+adjustPeakSizeOnReplace :: Order -> Order -> Order
+adjustPeakSizeOnReplace oldOrder@LimitOrder {} notAdjustedNewOrder = notAdjustedNewOrder
+
+adjustPeakSizeOnReplace oldOrder@IcebergOrder {} notAdjustedNewOrder@LimitOrder {} = notAdjustedNewOrder
+
+adjustPeakSizeOnReplace oldOrder@(IcebergOrder _ _ _ _ _ _ _ _ olddq oldps) notAdjustedNewOrder@(IcebergOrder _ _ _ _ _ _ _ _ newdq newps)
+    | oldps == olddq = notAdjustedNewOrder{peakSize = newdq}
+    | oldps < olddq && oldps > newdq = notAdjustedNewOrder{peakSize = newdq}
+    | otherwise = notAdjustedNewOrder

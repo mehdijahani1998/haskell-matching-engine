@@ -29,13 +29,17 @@ orderCanceller (CancelOrderRq _ oid side) s = do
   return (CancelOrderRs status o, s { orderBook = ob})
 
 orderReplacer :: Handler
-orderReplacer (ReplaceOrderRq oldoid o) s = do
-  (ob, oldo) <- cancelOrder oldoid (side o) (orderBook s)
+orderReplacer (ReplaceOrderRq oldoid oNotAdjusted) s = do
+  (ob, oldo) <- cancelOrder oldoid (side oNotAdjusted) (orderBook s)
   if isNothing oldo then
     return (ReplaceOrderRs Rejected Nothing [], s)
     else do
-      (ob', ts) <- matchNewOrder o ob
+      let oldOrder = fromJust oldo
+      let o = adjustPeakSizeOnReplace oldOrder oNotAdjusted
+      (ob', ts) <- if shouldReplaceInPlace oldOrder o then replaceOrderInPlace (oid oldOrder) o ob else matchNewOrder o ob
       return (ReplaceOrderRs Accepted oldo ts, s { orderBook = ob'})
+
+
 
 newOrderHandler :: Handler
 newOrderHandler = 
