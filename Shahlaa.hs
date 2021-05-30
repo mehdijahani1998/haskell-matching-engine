@@ -2,8 +2,6 @@ module Shahlaa where
 
 import qualified Data.Set as Set -- From the 'containers' library
 import Text.Printf
-import System.Random
-import Control.Monad
 import Control.Monad.Trans.State
 import Coverage
 import ME
@@ -26,14 +24,16 @@ initTestState = (initMEState, [], [])
 
 handleRequest :: TestState -> Request -> TestState
 handleRequest (s, rss, covs) rq =
-  let ((rs, s'), cov) = runState (requestHandler rq s) emptyCoverage
-  in (s', rss ++ [rs], covs ++ [cov])
+    (s', rss ++ [rs], covs ++ [cov])
+  where
+    ((rs, s'), cov) = runState (requestHandler rq s) emptyCoverage
 
 
 addOracle :: [Request] -> TestCase
 addOracle rqs = 
-  let (s, rss, covs) = foldl handleRequest initTestState rqs
-  in TestCase rqs rss covs
+    TestCase rqs rss covs
+  where
+    (s, rss, covs) = foldl handleRequest initTestState rqs
 
 
 fSide :: Side -> String

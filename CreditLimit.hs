@@ -22,35 +22,36 @@ totalWorth side shi ob =
 
 creditLimitCheck :: Order -> MEState -> [Trade] -> MEState -> Bool
 creditLimitCheck order beforeTradeState ts afterTradeState
-    | side order == Buy =
-        let buyerId = brid order
-            afterTrade = orderBook afterTradeState
-            shi = shid order
-        in (creditInfo beforeTradeState) Map.! buyerId >= (creditSpentByBuyer buyerId ts) + (totalWorth Buy shi afterTrade)
+    | side order == Buy  = (creditInfo beforeTradeState) Map.! buyerId >= (creditSpentByBuyer buyerId ts) + (totalWorth Buy shi afterTrade)
     | side order == Sell = True
+  where
+    buyerId = brid order
+    afterTrade = orderBook afterTradeState
+    shi = shid order
 
 
 updateCreditInfo :: Order -> [Trade] -> MEState -> MEState
-updateCreditInfo order ts s =
-    let s' = updateSellersCredit ts s
-    in if side order == Buy
-        then updateBuyerCredit order ts s'
-        else s'
+updateCreditInfo order ts s
+    | side order == Buy  = updateBuyerCredit order ts s'
+    | side order == Sell = s'
+  where
+    s' = updateSellersCredit ts s
 
 
 updateBuyerCredit :: Order -> [Trade] -> MEState -> MEState
 updateBuyerCredit buyOrder ts s@(MEState ob ci si rp) =
-  let buyerId = brid buyOrder
-      newCredit = ci Map.! buyerId - (creditSpentByBuyer buyerId ts)
-  in (MEState ob (Map.insert buyerId newCredit ci) si rp)
+    MEState ob (Map.insert buyerId newCredit ci) si rp
+  where
+    buyerId = brid buyOrder
+    newCredit = ci Map.! buyerId - (creditSpentByBuyer buyerId ts) 
 
 
 updateSellersCredit :: [Trade] -> MEState -> MEState
 updateSellersCredit ts (MEState ob ci si rp) =
-  let ci' = foldl (\m t -> Map.insertWith (+) (sellerBrId t) (valueTraded t) m) ci $
-            filter (\t -> buyerBrId t /= sellerBrId t) ts
-  in
-      (MEState ob ci' si rp)
+    MEState ob ci' si rp
+  where
+    ci' = foldl (\m t -> Map.insertWith (+) (sellerBrId t) (valueTraded t) m) ci $
+        filter (\t -> buyerBrId t /= sellerBrId t) ts
 
 
 creditLimitProc :: Decorator

@@ -58,25 +58,25 @@ genFixture (t:spec)
 
 genSetCreditRq :: [String] -> Request
 genSetCreditRq spec =
-    let brokerID = read $ spec !! 0 :: BrokerID
+    SetCreditRq brokerID credit
+  where
+        brokerID = read $ spec !! 0 :: BrokerID
         credit = read $ spec !! 1 :: Int
-        req = SetCreditRq brokerID credit
-    in req
 
 
 genSetOwnershipRq :: [String] -> Request
 genSetOwnershipRq spec =
-    let shareholderID = read $ spec !! 0 :: ShareholderID
+    SetOwnershipRq shareholderID credit
+  where
+        shareholderID = read $ spec !! 0 :: ShareholderID
         credit = read $ spec !! 1 :: Int
-        req = SetOwnershipRq shareholderID credit
-    in req
 
 
 genSetReferencePriceRq :: [String] -> Request
 genSetReferencePriceRq spec =
-    let referencePrice = read $ spec !! 0 :: Int
-        req = SetReferencePriceRq referencePrice
-    in req
+    SetReferencePriceRq referencePrice
+  where
+        referencePrice = read $ spec !! 0 :: Int
 
 
 genOrderRq :: OrderID -> [String] -> Request
@@ -89,7 +89,11 @@ genOrderRq newoid (t:spec)
 
 genOrder :: OrderID -> [String] -> Order
 genOrder newoid spec =
-    let brokerId = read $ spec !! 0 :: BrokerID
+    if isIceberge 
+        then icebergOrder newoid brokerId shareholderID price qty (if isBuy then Buy else Sell) (if hasMQ then Just minQty else Nothing) isFAK disclosedQty disclosedQty
+        else limitOrder newoid brokerId shareholderID price qty (if isBuy then Buy else Sell) (if hasMQ then Just minQty else Nothing) isFAK
+  where
+        brokerId = read $ spec !! 0 :: BrokerID
         shareholderID = read $ spec !! 1 :: ShareholderID
         price = read $ spec !! 2 :: Price
         qty = read $ spec !! 3 :: Quantity
@@ -99,24 +103,20 @@ genOrder newoid spec =
         isFAK = read $ spec !! 6 :: Bool
         disclosedQty = read $ spec !! 7 :: Quantity
         isIceberge = disclosedQty > 0
-        ord = if isIceberge 
-            then icebergOrder newoid brokerId shareholderID price qty (if isBuy then Buy else Sell) (if hasMQ then Just minQty else Nothing) isFAK disclosedQty disclosedQty
-            else limitOrder newoid brokerId shareholderID price qty (if isBuy then Buy else Sell) (if hasMQ then Just minQty else Nothing) isFAK
-    in ord
 
 
 genCancelOrderRq :: OrderID -> [String] -> Request
 genCancelOrderRq newoid spec =
-    let oid = read $ spec !! 0 :: OrderID
+    CancelOrderRq newoid oid side
+  where
+        oid = read $ spec !! 0 :: OrderID
         isBuy = read $ spec !! 1 :: Bool
         side = if isBuy then Buy else Sell
-        rq = CancelOrderRq newoid oid side
-    in rq
 
 
 genReplaceOrderRq :: OrderID -> [String] -> Request
 genReplaceOrderRq newoid spec =
-    let oldoid = read $ head spec :: OrderID
+    ReplaceOrderRq oldoid o
+  where
+        oldoid = read $ head spec :: OrderID
         o = genOrder newoid $ tail spec
-        rq = ReplaceOrderRq oldoid o
-    in rq
