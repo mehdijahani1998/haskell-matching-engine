@@ -1,4 +1,4 @@
-module MinQuantity where
+module MinQuantity (minQuantityCheck) where
 
 import           Coverage
 import           ME

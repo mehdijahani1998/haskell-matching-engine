@@ -1,4 +1,4 @@
-module CreditLimit where
+module CreditLimit (creditLimitProc) where
 
 import           Coverage
 import qualified Data.Map as Map

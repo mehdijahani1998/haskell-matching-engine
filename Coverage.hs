@@ -1,4 +1,12 @@
-module Coverage where
+module Coverage
+    ( Coverage
+    , CoverageInfo
+    , CoverageItem
+    , covers
+    , coverageScore
+    , emptyCoverage
+    ) where
+
 import           Control.Monad.Trans.State
 import           Data.Set                  as Set
 

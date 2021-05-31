@@ -1,4 +1,4 @@
-module MEService where
+module MEService (requestHandler) where
 
 import           CreditLimit
 import           Data.Map

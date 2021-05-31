@@ -1,4 +1,35 @@
-module ME where
+module ME
+    ( Order (..)
+    , Quantity
+    , Price
+    , TimeStamp
+    , OrderID
+    , BrokerID
+    , ShareholderID
+    , CreditInfo
+    , OwnershipInfo
+    , Side (..)
+    , OrderQueue
+    , OrderBook (..)
+    , Trade (..)
+    , MEState (..)
+    , Request (..)
+    , Response (..)
+    , OrderResponseStatus (..)
+    , Handler
+    , Decorator
+    , initMEState
+    , limitOrder
+    , icebergOrder
+    , removeOrderFromOrderBook
+    , valueTraded
+    , queue
+    , matchNewOrder
+    , cancelOrder
+    , adjustPeakSizeOnReplace
+    , shouldReplaceInPlace
+    , replaceOrderInPlace
+    ) where
 import           Control.Exception (assert)
 import           Coverage
 import qualified Data.List         as List

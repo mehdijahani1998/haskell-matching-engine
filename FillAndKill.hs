@@ -1,4 +1,4 @@
-module FillAndKill where
+module FillAndKill (fillAndKillProc) where
 
 import           Coverage
 import           ME

@@ -1,4 +1,4 @@
-module PriceBand where
+module PriceBand (pricebandCheck) where
 
 import           Coverage
 import           ME

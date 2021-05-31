@@ -1,4 +1,4 @@
-module Ownership where
+module Ownership (ownershipCheck) where
 
 import           Coverage
 import           Data.Map
