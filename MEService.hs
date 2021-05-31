@@ -1,13 +1,13 @@
 module MEService where
 
-import Data.Map
-import Data.Maybe
-import ME
-import Ownership
-import MinQuantity
-import FillAndKill
-import CreditLimit
-import PriceBand
+import           CreditLimit
+import           Data.Map
+import           Data.Maybe
+import           FillAndKill
+import           ME
+import           MinQuantity
+import           Ownership
+import           PriceBand
 
 ownershipUpperLimit :: Int
 ownershipUpperLimit = 20
@@ -43,28 +43,28 @@ orderReplacer (ReplaceOrderRq oldoid oNotAdjusted) s = do
 
 
 newOrderHandler :: Handler
-newOrderHandler = 
-    fillAndKillProc $ 
-    minQuantityCheck $ 
-    creditLimitProc $ 
-    ownershipCheck ownershipUpperLimit $ 
-    pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $ 
+newOrderHandler =
+    fillAndKillProc $
+    minQuantityCheck $
+    creditLimitProc $
+    ownershipCheck ownershipUpperLimit $
+    pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
     newOrderMatcher
 
 
 cancelOrderHandler :: Handler
 cancelOrderHandler =
-    creditLimitProc $ 
-    ownershipCheck ownershipUpperLimit $ 
-    pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $ 
+    creditLimitProc $
+    ownershipCheck ownershipUpperLimit $
+    pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
     orderCanceller
 
 
 replaceOrderHandler :: Handler
-replaceOrderHandler = 
-    creditLimitProc $ 
-    ownershipCheck ownershipUpperLimit $ 
-    pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $ 
+replaceOrderHandler =
+    creditLimitProc $
+    ownershipCheck ownershipUpperLimit $
+    pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
     orderReplacer
 
 

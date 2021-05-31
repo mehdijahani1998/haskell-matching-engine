@@ -1,16 +1,16 @@
 module Shahlaa where
 
-import qualified Data.Set as Set -- From the 'containers' library
-import Text.Printf
-import Control.Monad.Trans.State
-import Coverage
-import ME
-import MEService
+import           Control.Monad.Trans.State
+import           Coverage
+import qualified Data.Set                  as Set
+import           ME
+import           MEService
+import           Text.Printf
 
 
 data TestCase = TestCase
-    { input :: [Request]
-    , output :: [Response]
+    { input    :: [Request]
+    , output   :: [Response]
     , coverage :: [CoverageInfo]
     } deriving (Eq, Show)
 
@@ -30,7 +30,7 @@ handleRequest (s, rss, covs) rq =
 
 
 addOracle :: [Request] -> TestCase
-addOracle rqs = 
+addOracle rqs =
     TestCase rqs rss covs
   where
     (s, rss, covs) = foldl handleRequest initTestState rqs
@@ -38,7 +38,7 @@ addOracle rqs =
 
 fSide :: Side -> String
 fSide Sell = "SELL"
-fSide Buy = "BUY "
+fSide Buy  = "BUY "
 
 
 fFAK :: Bool -> String
@@ -46,14 +46,14 @@ fFAK b = if b then "FAK" else "---"
 
 
 fOptional :: Maybe Int -> Int
-fOptional Nothing = 0
+fOptional Nothing  = 0
 fOptional (Just n) = n
 
 
 fOrder :: Order -> String
-fOrder (LimitOrder i bi shi p q s mq fak) = 
+fOrder (LimitOrder i bi shi p q s mq fak) =
     printf "Limit\t%d\t%d\t%d\t%d\t%d\t%s\t%d\t%s\t0" i bi shi p q (fSide s) (fOptional mq) (fFAK fak)
-fOrder (IcebergOrder i bi shi p q s mq fak dq ps) = 
+fOrder (IcebergOrder i bi shi p q s mq fak dq ps) =
     printf "Iceberg\t%d\t%d\t%d\t%d\t%d\t%s\t%d\t%s\t%d" i bi shi p q (fSide s) (fOptional mq) (fFAK fak) ps
 
 
@@ -88,7 +88,7 @@ fResponse (CancelOrderRs status _) =
 fResponse (ReplaceOrderRs status _ ts) =
     printf "ReplaceOrderRs\t%s\n%s" (if status == Accepted then "Accepted" else "Rejected") (fTrades ts)
 fResponse (SetCreditRs s) =
-    printf "SetCreditRs\t%s\n" (if s then "Successful" else "Failed") 
+    printf "SetCreditRs\t%s\n" (if s then "Successful" else "Failed")
 fResponse (SetOwnershipRs s) =
     printf "SetOwnershipRs\t%s\n" (if s then "Successful" else "Failed")
 fResponse (SetReferencePriceRs s) =

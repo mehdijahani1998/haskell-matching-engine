@@ -1,7 +1,7 @@
 module FillAndKill where
 
-import Coverage
-import ME
+import           Coverage
+import           ME
 
 
 removeOrderFromState :: Order -> MEState -> MEState

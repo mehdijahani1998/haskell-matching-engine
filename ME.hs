@@ -1,8 +1,8 @@
 module ME where
-import qualified Data.Map as Map
-import qualified Data.List as List
-import Control.Exception (assert)
-import Coverage
+import           Control.Exception (assert)
+import           Coverage
+import qualified Data.List         as List
+import qualified Data.Map          as Map
 
 
 type Quantity = Int
@@ -16,57 +16,57 @@ type OwnershipInfo = Map.Map ShareholderID Int
 
 data Side = Buy | Sell deriving (Show, Eq, Ord)
 
-data Order = LimitOrder 
-    { oid :: OrderID
-    , brid :: BrokerID
-    , shid :: ShareholderID
-    , price :: Price
-    , quantity :: Quantity
-    , side :: Side
-    , minQty :: Maybe Quantity
+data Order = LimitOrder
+    { oid         :: OrderID
+    , brid        :: BrokerID
+    , shid        :: ShareholderID
+    , price       :: Price
+    , quantity    :: Quantity
+    , side        :: Side
+    , minQty      :: Maybe Quantity
     , fillAndKill :: Bool
-    } | IcebergOrder 
-    { oid :: OrderID
-    , brid :: BrokerID
-    , shid :: ShareholderID
-    , price :: Price
-    , quantity :: Quantity
-    , side :: Side
-    , minQty :: Maybe Quantity
-    , fillAndKill :: Bool
+    } | IcebergOrder
+    { oid          :: OrderID
+    , brid         :: BrokerID
+    , shid         :: ShareholderID
+    , price        :: Price
+    , quantity     :: Quantity
+    , side         :: Side
+    , minQty       :: Maybe Quantity
+    , fillAndKill  :: Bool
     , disclosedQty :: Quantity
-    , peakSize :: Quantity
+    , peakSize     :: Quantity
     } deriving (Show, Eq)
 
 type OrderQueue = [Order]
 
-data OrderBook = OrderBook 
-    { buyQueue :: OrderQueue
+data OrderBook = OrderBook
+    { buyQueue  :: OrderQueue
     , sellQueue :: OrderQueue
     } deriving (Show, Eq)
 
 
 queue :: Side -> OrderBook -> OrderQueue
-queue Buy ob = buyQueue ob
+queue Buy ob  = buyQueue ob
 queue Sell ob = sellQueue ob
 
 
-data Trade = Trade 
-  { priceTraded :: Price
+data Trade = Trade
+  { priceTraded      :: Price
     , quantityTraded :: Quantity
-    , buyId :: OrderID
-    , sellId :: OrderID
-    , buyerShId :: ShareholderID
-    , buyerBrId :: BrokerID
-    , sellerShId :: ShareholderID
-    , sellerBrId :: BrokerID
+    , buyId          :: OrderID
+    , sellId         :: OrderID
+    , buyerShId      :: ShareholderID
+    , buyerBrId      :: BrokerID
+    , sellerShId     :: ShareholderID
+    , sellerBrId     :: BrokerID
     } deriving (Show, Eq)
 
 
 data MEState = MEState
-    { orderBook :: OrderBook
-    , creditInfo :: CreditInfo
-    , ownershipInfo :: OwnershipInfo
+    { orderBook      :: OrderBook
+    , creditInfo     :: CreditInfo
+    , ownershipInfo  :: OwnershipInfo
     , referencePrice :: Price
     } deriving (Show, Eq)
 
@@ -78,18 +78,18 @@ initMEState = MEState (OrderBook [] []) Map.empty Map.empty 0
 data Request = NewOrderRq
     { order :: Order
     } | CancelOrderRq
-    { rqId :: OrderID
-    , oldOid :: OrderID
+    { rqId    :: OrderID
+    , oldOid  :: OrderID
     , oldSide :: Side
     } | ReplaceOrderRq
     { oldOid :: OrderID
-    , order :: Order
-    } | SetCreditRq 
+    , order  :: Order
+    } | SetCreditRq
     { broker :: BrokerID
     , credit :: Int
     } | SetOwnershipRq
     { shareholder :: ShareholderID
-    , shares :: Int
+    , shares      :: Int
     } | SetReferencePriceRq
     { newReferencePrice :: Int
     } deriving (Show, Eq)
@@ -100,12 +100,12 @@ data Response = NewOrderRs
     { status :: OrderResponseStatus
     , trades :: [Trade]
     } | CancelOrderRs
-    { status :: OrderResponseStatus
+    { status   :: OrderResponseStatus
     , oldOrder :: Maybe Order
     } | ReplaceOrderRs
-    { status :: OrderResponseStatus
+    { status   :: OrderResponseStatus
     , oldOrder :: Maybe Order
-    , trades :: [Trade]
+    , trades   :: [Trade]
     } | SetCreditRs
     { success :: Bool
     } | SetOwnershipRs
@@ -151,13 +151,13 @@ decQty (IcebergOrder i bi shi p q s mq fak dq ps) q' = icebergOrder i bi shi p (
 isIceberg :: Order -> Bool
 isIceberg IcebergOrder {} = True
 
-isIceberg LimitOrder {} = False
+isIceberg LimitOrder {}   = False
 
 
 displayedQty :: Order -> Quantity
 displayedQty order@IcebergOrder {} = peakSize order
 
-displayedQty order@LimitOrder {} = quantity order
+displayedQty order@LimitOrder {}   = quantity order
 
 
 removeOrderFromQueue :: Order -> OrderQueue -> OrderQueue
@@ -222,7 +222,7 @@ enqueueOrder' o (o1:os)
 enqueue :: Order -> OrderBook -> OrderBook
 enqueue o ob
     | side o == Buy = OrderBook (enqueueOrder o $ buyQueue ob) (sellQueue ob)
-    | side o == Sell = OrderBook (buyQueue ob) (enqueueOrder o $ sellQueue ob) 
+    | side o == Sell = OrderBook (buyQueue ob) (enqueueOrder o $ sellQueue ob)
 
 
 enqueueIcebergRemainder :: OrderQueue -> Order -> Coverage OrderQueue

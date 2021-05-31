@@ -1,21 +1,21 @@
 module CreditLimit where
 
+import           Coverage
 import qualified Data.Map as Map
-import Coverage
-import ME
+import           ME
 
 
 creditSpentByBuyer :: BrokerID -> [Trade] -> Int
-creditSpentByBuyer buyerId ts = 
-    sum $ 
-    map valueTraded $ 
+creditSpentByBuyer buyerId ts =
+    sum $
+    map valueTraded $
     filter (\t -> sellerBrId t /= buyerId) ts
 
 
 totalWorth :: Side -> ShareholderID -> OrderBook -> Int
 totalWorth side shi ob =
     sum $
-    map (\o -> price o * quantity o) $ 
+    map (\o -> price o * quantity o) $
     filter (\o -> shid o == shi) $
     queue side ob
 
@@ -43,7 +43,7 @@ updateBuyerCredit buyOrder ts s@(MEState ob ci si rp) =
     MEState ob (Map.insert buyerId newCredit ci) si rp
   where
     buyerId = brid buyOrder
-    newCredit = ci Map.! buyerId - (creditSpentByBuyer buyerId ts) 
+    newCredit = ci Map.! buyerId - (creditSpentByBuyer buyerId ts)
 
 
 updateSellersCredit :: [Trade] -> MEState -> MEState

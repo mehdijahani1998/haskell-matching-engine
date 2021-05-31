@@ -1,7 +1,7 @@
 module MinQuantity where
 
-import Coverage
-import ME
+import           Coverage
+import           ME
 
 
 minQuantityCheck :: Decorator

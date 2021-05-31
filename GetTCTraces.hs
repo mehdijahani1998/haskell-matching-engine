@@ -1,11 +1,11 @@
-import System.IO
-import System.Environment
-import System.Exit
-import Control.Monad
-import Data.List.Index
+import           Control.Monad
+import           Data.List.Index
+import           System.Environment
+import           System.Exit
+import           System.IO
 
-import ME
-import Shahlaa
+import           ME
+import           Shahlaa
 
 
 main :: IO()
@@ -44,7 +44,7 @@ main = do
         then putStrLn $ fTestCase tc
         -- else putStrLn $ fCoverage $ coverage tc
         else putStrLn $ fCoverageInOrder $ coverage tc
-    
+
     hClose handle
 
 
@@ -89,7 +89,7 @@ genOrderRq newoid (t:spec)
 
 genOrder :: OrderID -> [String] -> Order
 genOrder newoid spec =
-    if isIceberge 
+    if isIceberge
         then icebergOrder newoid brokerId shareholderID price qty (if isBuy then Buy else Sell) (if hasMQ then Just minQty else Nothing) isFAK disclosedQty disclosedQty
         else limitOrder newoid brokerId shareholderID price qty (if isBuy then Buy else Sell) (if hasMQ then Just minQty else Nothing) isFAK
   where

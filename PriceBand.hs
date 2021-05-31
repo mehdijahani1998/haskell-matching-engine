@@ -1,12 +1,12 @@
 module PriceBand where
 
-import Coverage
-import ME
+import           Coverage
+import           ME
 
 
 pricebandCheck :: Float -> Float -> Decorator
 pricebandCheck minPriceBand maxPriceBand handler rq s = case rq of
-    (NewOrderRq o) -> do  
+    (NewOrderRq o) -> do
         (rs, s') <- handler rq s
         let rp = referencePrice s
         case status rs of

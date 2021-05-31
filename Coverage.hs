@@ -1,6 +1,6 @@
 module Coverage where
-import Control.Monad.Trans.State
-import Data.Set as Set
+import           Control.Monad.Trans.State
+import           Data.Set                  as Set
 
 
 type CoverageItem = String
@@ -19,7 +19,7 @@ type Coverage = State CoverageInfo
 
 
 covers :: a -> CoverageItem -> Coverage a
-covers value item = do 
+covers value item = do
     curCoverage <- get
     put (item:curCoverage)
     return value

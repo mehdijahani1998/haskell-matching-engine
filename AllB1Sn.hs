@@ -1,18 +1,18 @@
 module Main where
-import qualified Data.Set as Set -- From the 'containers' library
-import Text.Printf
-import System.Random
-import System.Environment
-import System.IO
-import Control.Monad
-import Control.Monad.Trans.State
-import ME
-import Shahlaa
+import           Control.Monad
+import           Control.Monad.Trans.State
+import qualified Data.Set                  as Set
+import           ME
+import           Shahlaa
+import           System.Environment
+import           System.IO
+import           System.Random
+import           Text.Printf
 
 
 wellFormed :: Side -> OrderQueue -> Bool
 wellFormed Sell os = wellOrdered (<=) os
-wellFormed Buy os = wellOrdered (>=) os
+wellFormed Buy os  = wellOrdered (>=) os
 
 
 wellOrdered :: (Int -> Int -> Bool) -> OrderQueue -> Bool
@@ -32,14 +32,14 @@ genAllPQ maxPrice maxQty =
 
 
 canPrepend :: RawOrder -> [RawOrder] -> Bool
-canPrepend o [] = True
+canPrepend o []                           = True
 canPrepend (p, _, _, _) ((p1, _, _, _):_) = (p <= p1)
 
 
 prependToAll :: RawOrder -> [[RawOrder]] -> [[RawOrder]]
-prependToAll order queueList = 
-  foldl (\acc queue -> if (canPrepend order queue) then (acc ++ [order:queue]) else acc) 
-  [] 
+prependToAll order queueList =
+  foldl (\acc queue -> if (canPrepend order queue) then (acc ++ [order:queue]) else acc)
+  []
   queueList
 
 
@@ -49,7 +49,7 @@ prependAllToAll orderList queueList = foldl (\acc order -> acc ++ (prependToAll 
 
 genAllPQLists :: Price -> Quantity -> Int -> [[RawOrder]]
 genAllPQLists _ _ 0 = [[]]
-genAllPQLists maxPrice maxQty n = 
+genAllPQLists maxPrice maxQty n =
   prependAllToAll (genAllPQ maxPrice maxQty) (genAllPQLists maxPrice maxQty (n-1))
 
 
@@ -70,16 +70,16 @@ makeOrderFormAll list = zipWith (\(p, q, mq, ps) i -> makeOrder i Sell (p, q, mq
 
 
 genAllSellQueues :: Price -> Quantity -> Int -> [OrderQueue]
-genAllSellQueues maxPrice maxQty n = 
-  filter (wellFormed Sell) $ 
-  map makeOrderFormAll $ 
+genAllSellQueues maxPrice maxQty n =
+  filter (wellFormed Sell) $
+  map makeOrderFormAll $
   genAllPQLists maxPrice maxQty n
   where
 
 
 genAllB1SnInputs :: Price -> Quantity -> Int -> [[Order]]
-genAllB1SnInputs maxPrice maxQty queueLen = 
-  [ sq ++ [b] | b <- map (makeOrder (maxPrice * maxQty) Buy) (genAllPQ maxPrice maxQty), 
+genAllB1SnInputs maxPrice maxQty queueLen =
+  [ sq ++ [b] | b <- map (makeOrder (maxPrice * maxQty) Buy) (genAllPQ maxPrice maxQty),
                 sq <- genAllSellQueues maxPrice maxQty queueLen]
 
 
@@ -94,19 +94,19 @@ allSellOrders = genAllPQ
 
 
 canAppend :: RawOrder -> [RawOrder] -> Bool
-canAppend o [] = True
+canAppend o []            = True
 canAppend (p, _, _, _) os = (p >= p1) where (p1, _, _, _) = last os
 
 
 appendToAll :: RawOrder -> [[RawOrder]] -> [[RawOrder]]
-appendToAll order queueList = 
-  foldl (\acc queue -> if (canAppend order queue) then (acc ++ [queue ++ [order]]) else acc) 
-  [] 
+appendToAll order queueList =
+  foldl (\acc queue -> if (canAppend order queue) then (acc ++ [queue ++ [order]]) else acc)
+  []
   queueList
 
 
 appendAllToAll :: [RawOrder] -> [[RawOrder]] -> [[RawOrder]]
-appendAllToAll orderList queueList = 
+appendAllToAll orderList queueList =
   foldl (\acc order -> acc ++ (appendToAll order queueList)) [] orderList
 
 
@@ -139,8 +139,8 @@ buySellQueuePairs maxLength maxPrice maxQuantity =
 
 gen2 maxLength maxPrice maxQuantity =
   foldl (++) [] $
-  map 
-    (\(b, sq) -> [(map (makeOrder 0 Sell) sq) ++ [b]]) 
+  map
+    (\(b, sq) -> [(map (makeOrder 0 Sell) sq) ++ [b]])
     (buySellQueuePairs maxLength maxPrice maxQuantity)
 
 

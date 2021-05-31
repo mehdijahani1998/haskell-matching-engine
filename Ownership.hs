@@ -1,13 +1,13 @@
 module Ownership where
 
-import Data.Map
-import Coverage
-import ME
+import           Coverage
+import           Data.Map
+import           ME
 
 
 ownershipCheck :: Int -> Decorator
 ownershipCheck maxOwnership handler rq s = case rq of
-    (NewOrderRq o) -> do  
+    (NewOrderRq o) -> do
         (rs, s') <- handler rq s
         case status rs of
             Accepted ->  if ownershipPreCheck maxOwnership o Nothing s
@@ -30,7 +30,7 @@ ownershipCheck maxOwnership handler rq s = case rq of
 updateOwnershipInfo :: [Trade] -> MEState -> MEState
 updateOwnershipInfo ts (MEState ob ci oi rp) =
   MEState ob ci (Prelude.foldl updateOwnership oi ts) rp
-   
+
 
 updateOwnership :: OwnershipInfo -> Trade -> OwnershipInfo
 updateOwnership oi t =
@@ -43,7 +43,7 @@ updateOwnership oi t =
 
 quantityInQueue :: Maybe Order -> OrderBook -> Int
 quantityInQueue (Just o) ob =
-    sum $ 
+    sum $
     Prelude.map quantity $
     Prelude.filter (\orderInQueue -> oid orderInQueue == oid o) $
     (if side o == Buy then buyQueue else sellQueue) $
