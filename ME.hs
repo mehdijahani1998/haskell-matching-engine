@@ -159,7 +159,10 @@ limitOrder i bi shi p q s m fak =
     assert (i >= 0) $
     assert (p > 0) $
     assert (q > 0) $
-    case m of {(Just mq) -> assert (mq > 0); otherwise -> id} $
+    case m of
+        { (Just mq) -> assert (mq > 0)
+        ; otherwise -> id
+        } $
     LimitOrder i bi shi p q s m fak
 
 
@@ -168,7 +171,10 @@ icebergOrder i bi shi p q s m fak dq vq =
     assert (i >= 0) $
     assert (p > 0) $
     assert (q > 0) $
-    case m of {(Just mq) -> assert (mq > 0); otherwise -> id} $
+    case m of
+        { (Just mq) -> assert (mq > 0)
+        ; otherwise -> id
+        } $
     assert (dq <= q) $
     assert (vq > 0 && vq <= dq && vq <= q) $
     IcebergOrder i bi shi p q s m fak dq vq
