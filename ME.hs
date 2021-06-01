@@ -197,43 +197,46 @@ removeOrderFromQueue = List.deleteBy (\ o1 o2 -> oid o1 == oid o2)
 
 
 replaceOrderInQueue :: OrderID -> Order -> OrderQueue -> OrderQueue
-replaceOrderInQueue ooid o (h:t) = (h':t)
-  where h' = if oid h == ooid then o else h
+replaceOrderInQueue _ _ [] = []
 
-replaceOrderInQueue ooid o [] = []
+replaceOrderInQueue ooid o (h:t)
+    | oid h == ooid = o:t
+    | otherwise     = h:t
 
 
 findOrderFromQueueByID :: OrderID -> OrderQueue -> Maybe Order
-findOrderFromQueueByID oidToRemove oq = do
-    case filtered of
-        (h:_)     -> Just h
-        otherwise -> Nothing
+findOrderFromQueueByID oidToRemove oq
+    | null filtered = Nothing
+    | otherwise     = Just $ head filtered
   where
     filtered = List.filter (\o -> oid o == oidToRemove) oq
 
 
 removeOrderFromOrderBook :: Order -> OrderBook -> OrderBook
 removeOrderFromOrderBook o (OrderBook bq sq)
-    | side o == Buy = OrderBook (removeOrderFromQueue o bq) sq
+    | side o == Buy  = OrderBook (removeOrderFromQueue o bq) sq
     | side o == Sell = OrderBook bq (removeOrderFromQueue o sq)
+    | otherwise = error "incomparable orders"
 
 
 replaceOrderInOrderBook :: OrderID -> Order -> OrderBook -> OrderBook
 replaceOrderInOrderBook ooid o (OrderBook bq sq)
-    | side o == Buy = OrderBook (replaceOrderInQueue ooid o bq) sq
+    | side o == Buy  = OrderBook (replaceOrderInQueue ooid o bq) sq
     | side o == Sell = OrderBook bq (replaceOrderInQueue ooid o sq)
+    | otherwise = error "incomparable orders"
 
 
 findOrderFromOrderBookByID :: OrderID -> Side -> OrderBook ->  Maybe Order
 findOrderFromOrderBookByID oid side (OrderBook bq sq)
-    | side == Buy = findOrderFromQueueByID oid bq
+    | side == Buy  = findOrderFromQueueByID oid bq
     | side == Sell = findOrderFromQueueByID oid sq
+    | otherwise = error "incomparable orders"
 
 
 queuesBefore :: Order -> Order -> Bool
 queuesBefore o o'
     | side o == Sell && side o' == Sell = price o < price o'
-    | side o == Buy && side o' == Buy = price o > price o'
+    | side o == Buy  && side o' == Buy  = price o > price o'
     | otherwise = error "incomparable orders"
 
 
@@ -255,8 +258,9 @@ enqueueOrder' o (o1:os)
 
 enqueue :: Order -> OrderBook -> OrderBook
 enqueue o ob
-    | side o == Buy = OrderBook (enqueueOrder o $ buyQueue ob) (sellQueue ob)
+    | side o == Buy  = OrderBook (enqueueOrder o $ buyQueue ob) (sellQueue ob)
     | side o == Sell = OrderBook (buyQueue ob) (enqueueOrder o $ sellQueue ob)
+    | otherwise = error "incomparable orders"
 
 
 enqueueIcebergRemainder :: OrderQueue -> Order -> Coverage OrderQueue
