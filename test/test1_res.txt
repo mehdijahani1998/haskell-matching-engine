@@ -1,27 +1,37 @@
-17
+23
 SetReferencePriceRq	10
 SetCreditRq	1	98
 SetCreditRq	2	145
 SetCreditRq	3	65
 SetCreditRq	4	195
 SetCreditRq	5	73
+SetCreditRq	6	100
+SetCreditRq	7	100
 SetOwnershipRq	1	16
-SetOwnershipRq	2	20
+SetOwnershipRq	2	19
 SetOwnershipRq	3	9
 SetOwnershipRq	4	7
 SetOwnershipRq	5	16
+SetOwnershipRq	6	19
+SetOwnershipRq	7	0
 NewOrderRq		Iceberg	0	2	4	10	9	SELL	0	---	4
 NewOrderRq		Limit	1	4	3	3	2	SELL	0	---	0
 CancelOrderRq	1		2					SELL
 NewOrderRq		Limit	3	3	1	9	3	BUY 	0	---	0
 NewOrderRq		Limit	4	4	3	10	2	SELL	0	---	0
 ReplaceOrderRq	4	Limit	5	4	3	3	2	SELL	0	---	0
+NewOrderRq		Iceberg	6	6	6	3	19	SELL	0	---	4
+NewOrderRq		Iceberg	7	7	7	3	19	BUY 	0	---	4
 SetReferencePriceRs	Successful
 SetCreditRs	Successful
 SetCreditRs	Successful
 SetCreditRs	Successful
 SetCreditRs	Successful
 SetCreditRs	Successful
+SetCreditRs	Successful
+SetCreditRs	Successful
+SetOwnershipRs	Successful
+SetOwnershipRs	Successful
 SetOwnershipRs	Successful
 SetOwnershipRs	Successful
 SetOwnershipRs	Successful
@@ -39,5 +49,15 @@ NewOrderRs	Accepted
 ReplaceOrderRs	Accepted
 	Trades 1
 	9	2	3	5
+NewOrderRs	Accepted
+	Trades 1
+	9	1	3	6
+NewOrderRs	Accepted
+	Trades 5
+	3	4	7	6
+	3	4	7	6
+	3	4	7	6
+	3	4	7	6
+	3	3	7	6
 
 
