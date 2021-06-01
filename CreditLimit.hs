@@ -17,7 +17,7 @@ totalWorth side shi ob =
     sum $
     map (\o -> price o * quantity o) $
     filter (\o -> shid o == shi) $
-    queue side ob
+    queueBySide side ob
 
 
 creditLimitCheck :: Order -> MEState -> [Trade] -> MEState -> Bool

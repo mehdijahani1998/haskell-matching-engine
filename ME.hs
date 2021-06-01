@@ -23,12 +23,13 @@ module ME
     , icebergOrder
     , removeOrderFromOrderBook
     , valueTraded
-    , queue
     , matchNewOrder
     , cancelOrder
     , adjustPeakSizeOnReplace
     , shouldReplaceInPlace
     , replaceOrderInPlace
+    , queueBySide
+    , sameSideQueue
     ) where
 import           Control.Exception (assert)
 import           Coverage
@@ -75,11 +76,6 @@ data OrderBook = OrderBook
     { buyQueue  :: OrderQueue
     , sellQueue :: OrderQueue
     } deriving (Show, Eq)
-
-
-queue :: Side -> OrderBook -> OrderQueue
-queue Buy ob  = buyQueue ob
-queue Sell ob = sellQueue ob
 
 
 data Trade = Trade
@@ -236,25 +232,38 @@ findOrderFromQueueByID oidToRemove oq
     filtered = List.filter (\o -> oid o == oidToRemove) oq
 
 
+applyOnQueue :: (OrderQueue -> OrderQueue) -> Side -> OrderBook -> OrderBook
+applyOnQueue f side (OrderBook bq sq)
+    | side == Buy  = OrderBook (f bq) sq
+    | side == Sell = OrderBook bq (f sq)
+    | otherwise = error "invalid Side"
+
+
+applyOnSameSideQueue :: (OrderQueue -> OrderQueue) -> Order -> OrderBook -> OrderBook
+applyOnSameSideQueue f o = applyOnQueue f (side o)
+
+
+queueBySide :: Side -> OrderBook -> OrderQueue
+queueBySide side ob
+    | side == Buy  = buyQueue ob
+    | side == Sell = sellQueue ob
+    | otherwise = error "invalid Side"
+
+
+sameSideQueue :: Order -> OrderBook -> OrderQueue
+sameSideQueue o = queueBySide $ side o
+
+
 removeOrderFromOrderBook :: Order -> OrderBook -> OrderBook
-removeOrderFromOrderBook o (OrderBook bq sq)
-    | side o == Buy  = OrderBook (removeOrderFromQueue o bq) sq
-    | side o == Sell = OrderBook bq (removeOrderFromQueue o sq)
-    | otherwise = error "incomparable orders"
+removeOrderFromOrderBook o = applyOnSameSideQueue (removeOrderFromQueue o) o
 
 
 replaceOrderInOrderBook :: OrderID -> Order -> OrderBook -> OrderBook
-replaceOrderInOrderBook ooid o (OrderBook bq sq)
-    | side o == Buy  = OrderBook (replaceOrderInQueue ooid o bq) sq
-    | side o == Sell = OrderBook bq (replaceOrderInQueue ooid o sq)
-    | otherwise = error "incomparable orders"
+replaceOrderInOrderBook ooid o = applyOnSameSideQueue (replaceOrderInQueue ooid o) o
 
 
 findOrderFromOrderBookByID :: OrderID -> Side -> OrderBook ->  Maybe Order
-findOrderFromOrderBookByID oid side (OrderBook bq sq)
-    | side == Buy  = findOrderFromQueueByID oid bq
-    | side == Sell = findOrderFromQueueByID oid sq
-    | otherwise = error "incomparable orders"
+findOrderFromOrderBookByID oid side ob = findOrderFromQueueByID oid $ queueBySide side ob
 
 
 queuesBefore :: Order -> Order -> Bool
@@ -279,10 +288,7 @@ enqueueOrder' o (o1:os)
 
 
 enqueue :: Order -> OrderBook -> OrderBook
-enqueue o ob
-    | side o == Buy  = OrderBook (enqueueOrder o $ buyQueue ob) (sellQueue ob)
-    | side o == Sell = OrderBook (buyQueue ob) (enqueueOrder o $ sellQueue ob)
-    | otherwise = error "incomparable orders"
+enqueue o = applyOnSameSideQueue (enqueueOrder o) o
 
 
 enqueueRemainder :: OrderQueue -> Order -> Coverage OrderQueue
@@ -303,67 +309,56 @@ enqueueRemainder os o@IcebergOrder {}
     dq = disclosedQty o
 
 
-matchBuy :: Order -> OrderQueue -> Coverage (Maybe Order, OrderQueue, [Trade])
-matchBuy o [] = (Just o, [], []) `covers` "MB-0"
+canBeMatchedWithOppositeQueueHead :: Order -> Order -> Bool
+canBeMatchedWithOppositeQueueHead o h
+    | s == Buy  = newp >= headp
+    | s == Sell = newp <= headp
+  where
+    s = side o
+    newp = price o
+    headp = price h
 
-matchBuy o oq@(h:os)
-    | newp < headp = (Just o, oq, []) `covers` "MB-1"
-    | newq < headq = (Nothing, (decQty h newq):os, [Trade headp newq newi headi newshi newbi headshi headbi]) `covers` "MB-2"
+trade :: Price -> Quantity -> Order -> Order -> Trade
+trade p q newo oppositeo
+    | side newo == Buy  = Trade p q newi headi newshi newbi headshi headbi
+    | side newo == Sell = Trade p q headi newi headshi headbi newshi newbi
+  where
+    newi = oid newo
+    newshi = shid newo
+    newbi = brid newo
+    headi = oid oppositeo
+    headshi = shid oppositeo
+    headbi = brid oppositeo
+
+
+match :: Order -> OrderQueue -> Coverage (Maybe Order, OrderQueue, [Trade])
+match o [] = (Just o, [], []) `covers` "M-0"
+
+match o oq@(h:os)
+    | not $ canBeMatchedWithOppositeQueueHead o h = (Just o, oq, []) `covers` "M-1"
+    | newq < headq = (Nothing, (decQty h newq):os, [trade headp newq o h]) `covers` "M-2"
     | newq == headq = do
         newQueue <- enqueueRemainder os $ decQty h newq
-        (Nothing, newQueue, [Trade headp newq newi headi newshi newbi headshi headbi]) `covers` "MB-3"
+        (Nothing, newQueue, [trade headp newq o h]) `covers` "M-3"
     | newq > headq = do
         newQueue <- enqueueRemainder os $ decQty h headq
-        (o', ob', ts') <- matchBuy (decQty o headq) newQueue
-        (o', ob', (Trade headp headq newi headi newshi newbi headshi headbi):ts') `covers` "MB-4"
+        (o', ob', ts') <- match (decQty o headq) newQueue
+        (o', ob', (trade headp headq o h):ts') `covers` "M-4"
   where
-    newp = price o
     newq = quantity o
-    newi = oid o
-    newshi = shid o
-    newbi = brid o
     headp = price h
     headq = displayedQty h
-    headi = oid h
-    headshi = shid h
-    headbi = brid h
-
-
-matchSell :: Order -> OrderQueue -> Coverage (Maybe Order, OrderQueue, [Trade])
-matchSell o [] = (Just o, [], []) `covers` "MS-0"
-
-matchSell o oq@(h:os)
-    | newp > headp = (Just o, oq, []) `covers` "MS-1"
-    | newq < headq = (Nothing, (decQty h newq):os, [Trade headp newq headi newi headshi headbi newshi newbi]) `covers` "MS-2"
-    | newq == headq = do
-        newQueue <- enqueueRemainder os $ decQty h newq
-        (Nothing, newQueue, [Trade headp newq headi newi headshi headbi newshi newbi]) `covers` "MS-3"
-    | newq > headq = do
-        newQueue <- enqueueRemainder os $ decQty h headq
-        (o', ob', ts') <- matchBuy (decQty o headq) newQueue
-        (o', ob', (Trade headp headq headi newi headshi headbi newshi newbi):ts') `covers` "MS-4"
-  where
-    newp = price o
-    newq = quantity o
-    newi = oid o
-    newshi = shid o
-    newbi = brid o
-    headp = price h
-    headq = displayedQty h
-    headi = oid h
-    headshi = shid h
-    headbi = brid h
 
 
 matchNewOrder :: Order -> OrderBook -> Coverage (OrderBook, [Trade])
 matchNewOrder o ob
     | side o == Buy = do
-        (rem, sq, ts) <- (matchBuy o (sellQueue ob))
+        (rem, sq, ts) <- (match o (sellQueue ob))
         case rem of
             Nothing -> (OrderBook (buyQueue ob) sq, ts) `covers` "MNO-1"
             Just o' -> (enqueue o' $ OrderBook (buyQueue ob) sq, ts) `covers` "MNO-2"
     | side o == Sell = do
-        (rem, bq, ts) <- (matchSell o (buyQueue ob))
+        (rem, bq, ts) <- (match o (buyQueue ob))
         case rem of
             Nothing -> (OrderBook bq (sellQueue ob), ts) `covers` "MNO-3"
             Just o' -> (enqueue o' $ OrderBook bq (sellQueue ob), ts) `covers` "MNO-4"

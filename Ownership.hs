@@ -41,21 +41,24 @@ updateOwnership oi t =
     sshid = sellerShId t
 
 
-quantityInQueue :: Maybe Order -> OrderBook -> Int
-quantityInQueue (Just o) ob =
+quantityInBook :: Maybe Order -> OrderBook -> Int
+quantityInBook (Just o) ob =
+    quantityInQueue o $ sameSideQueue o ob
+
+quantityInBook Nothing _ = 0
+
+
+quantityInQueue :: Order -> OrderQueue -> Int
+quantityInQueue o q =
     sum $
     Prelude.map quantity $
     Prelude.filter (\orderInQueue -> oid orderInQueue == oid o) $
-    (if side o == Buy then buyQueue else sellQueue) $
-    ob
-
-quantityInQueue Nothing ob = 0
-
+    q
 
 ownershipPreCheck :: Int -> Order -> Maybe Order -> MEState -> Bool
 ownershipPreCheck maxOwnership o oldOrder (MEState ob _ ownership _) = case side o of
-    Buy -> (ownership!shi) + (quantity o) + (totalQuantity Buy shi ob) - (quantityInQueue oldOrder ob) < maxOwnership
-    Sell -> (quantity o) + (totalQuantity Sell shi ob) - (quantityInQueue oldOrder ob) <= (ownership!shi)
+    Buy -> (ownership!shi) + (quantity o) + (totalQuantity Buy shi ob) - (quantityInBook oldOrder ob) < maxOwnership
+    Sell -> (quantity o) + (totalQuantity Sell shi ob) - (quantityInBook oldOrder ob) <= (ownership!shi)
   where
     shi = shid o
 
@@ -65,4 +68,4 @@ totalQuantity side shi ob =
     sum $
     Prelude.map quantity $
     Prelude.filter (\o -> shid o == shi) $
-    queue side ob
+    queueBySide side ob
