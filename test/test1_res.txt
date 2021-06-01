@@ -58,6 +58,6 @@ NewOrderRs	Accepted
 	3	4	7	6
 	3	4	7	6
 	3	4	7	6
-	3	3	7	6
+	3	2	7	6
 
 

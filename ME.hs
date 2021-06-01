@@ -269,6 +269,18 @@ enqueue o ob
     | otherwise = error "incomparable orders"
 
 
+enqueueRemainder :: OrderQueue -> Order -> Coverage OrderQueue
+enqueueRemainder os o@LimitOrder {}   = enqueueLimitOrderRemainder os o
+
+enqueueRemainder os o@IcebergOrder {} = enqueueIcebergRemainder os o
+
+
+enqueueLimitOrderRemainder :: OrderQueue -> Order -> Coverage OrderQueue
+enqueueLimitOrderRemainder os (LimitOrder _ _ _ _ 0 _ _ _) = os `covers` "ELR-1"
+
+enqueueLimitOrderRemainder os _ = error "enqueue non-empty remainder"
+
+
 enqueueIcebergRemainder :: OrderQueue -> Order -> Coverage OrderQueue
 enqueueIcebergRemainder os (IcebergOrder _ _ _ _ 0 _ _ _ _ _) = os `covers` "EIR-1"
 
@@ -276,75 +288,59 @@ enqueueIcebergRemainder os (IcebergOrder i bi shi p q s mq fak dq 0)
     | q <= dq = enqueueOrder (icebergOrder i bi shi p q s mq fak dq q) os `covers` "EIR-2"
     | otherwise = enqueueOrder (icebergOrder i bi shi p q s mq fak dq dq) os `covers` "EIR-3"
 
+enqueueIcebergRemainder os _ = error "enqueue non-empty remainder"
+
 
 matchBuy :: Order -> OrderQueue -> Coverage (Maybe Order, OrderQueue, [Trade])
 matchBuy o [] = (Just o, [], []) `covers` "MB-0"
 
-matchBuy o oq@((LimitOrder i1 bi1 shi1 p1 q1 s1 mq1 fak):os)
-    | p < p1 = (Just o, oq, []) `covers` "MBL-1"
-    | q < q1 = (Nothing, (decQty (head oq) q):os, [Trade p1 q i i1 shi bi shi1 bi1]) `covers` "MBL-2"
-    | q == q1 = (Nothing, os, [Trade p1 q i i1 shi bi shi1 bi1]) `covers` "MBL-3"
-    | q > q1 = do
-        (o', ob', ts') <- matchBuy (decQty o q1) os
-        (o', ob', (Trade p1 q1 i i1 shi bi shi1 bi1):ts') `covers` "MBL-4"
+matchBuy o oq@(h:os)
+    | newp < headp = (Just o, oq, []) `covers` "MB-1"
+    | newq < headq = (Nothing, (decQty h newq):os, [Trade headp newq newi headi newshi newbi headshi headbi]) `covers` "MB-2"
+    | newq == headq = do
+        newQueue <- enqueueRemainder os $ decQty h newq
+        (Nothing, newQueue, [Trade headp newq newi headi newshi newbi headshi headbi]) `covers` "MB-3"
+    | newq > headq = do
+        newQueue <- enqueueRemainder os $ decQty h headq
+        (o', ob', ts') <- matchBuy (decQty o headq) newQueue
+        (o', ob', (Trade headp headq newi headi newshi newbi headshi headbi):ts') `covers` "MB-4"
   where
-    p = price o
-    q = quantity o
-    i = oid o
-    shi = shid o
-    bi = brid o
-
-matchBuy o ((IcebergOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1 dq1 vq1):os)
-    | p < p1 = (Just o, (icebergOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1 dq1 vq1):os, []) `covers` "MBI-1"
-    | q < dq1 = (Nothing, (icebergOrder i1 bi1 shi1 p1 (q1-q) s1 mq1 fak1 dq1 (vq1-q)):os, [Trade p1 q i i1 shi bi shi1 bi1]) `covers` "MBI-2"
-    | q == dq1 = do
-        newQueue <- enqueueIcebergRemainder os (icebergOrder i1 bi1 shi1 p1 (q1-dq1) s1 mq1 fak1 dq1 0)
-        (Nothing, newQueue, [Trade p1 q i i1 shi bi shi1 bi1]) `covers` "MBI-3"
-    | q > dq1 = do
-        newQueue <- enqueueIcebergRemainder os (icebergOrder i1 bi1 shi1 p1 (q1-dq1) s1 mq1 fak1 dq1 0)
-        (o', ob', ts') <- matchBuy (decQty o dq1) newQueue
-        (o', ob', (Trade p1 dq1 i i1 shi bi shi1 bi1):ts') `covers` "MBI-4"
-  where
-    p = price o
-    q = quantity o
-    i = oid o
-    shi = shid o
-    bi = brid o
+    newp = price o
+    newq = quantity o
+    newi = oid o
+    newshi = shid o
+    newbi = brid o
+    headp = price h
+    headq = displayedQty h
+    headi = oid h
+    headshi = shid h
+    headbi = brid h
 
 
 matchSell :: Order -> OrderQueue -> Coverage (Maybe Order, OrderQueue, [Trade])
 matchSell o [] = (Just o, [], []) `covers` "MS-0"
 
-matchSell o oq@((LimitOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1):os)
-    | p > p1 = (Just o, oq, []) `covers` "MSL-1"
-    | q < q1 = (Nothing, (decQty (head oq) q):os, [Trade p1 q i1 i shi1 bi1 shi bi]) `covers` "MSL-2"
-    | q == q1 = (Nothing, os, [Trade p1 q i1 i shi1 bi1 shi bi]) `covers` "MSL-3"
-    | q > q1 = do
-        (o', ob', ts') <- matchSell (decQty o q1) os
-        (o', ob', (Trade p1 q1 i1 i shi1 bi1 shi bi):ts') `covers` "MSL-4"
+matchSell o oq@(h:os)
+    | newp > headp = (Just o, oq, []) `covers` "MS-1"
+    | newq < headq = (Nothing, (decQty h newq):os, [Trade headp newq headi newi headshi headbi newshi newbi]) `covers` "MS-2"
+    | newq == headq = do
+        newQueue <- enqueueRemainder os $ decQty h newq
+        (Nothing, newQueue, [Trade headp newq headi newi headshi headbi newshi newbi]) `covers` "MS-3"
+    | newq > headq = do
+        newQueue <- enqueueRemainder os $ decQty h headq
+        (o', ob', ts') <- matchBuy (decQty o headq) newQueue
+        (o', ob', (Trade headp headq headi newi headshi headbi newshi newbi):ts') `covers` "MS-4"
   where
-    p = price o
-    q = quantity o
-    i = oid o
-    shi = shid o
-    bi = brid o
-
-matchSell o ((IcebergOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1 dq1 vq1):os)
-    | p > p1 = (Just o, (icebergOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1 dq1 vq1):os, []) `covers` "MSI-1"
-    | q < dq1 = (Nothing, (icebergOrder i1 bi1 shi1 p1 (q1-q) s1 mq1 fak1 dq1 (vq1-q)):os, [Trade p1 q i1 i shi1 bi1 shi bi]) `covers` "MSI-2"
-    | q == dq1 = do
-        newQueue <- enqueueIcebergRemainder os (icebergOrder i1 bi1 shi1 p1 (q1-dq1) s1 mq1 fak1 dq1 0)
-        (Nothing, newQueue, [Trade p1 q i1 i shi1 bi1 shi bi])  `covers` "MSI-3"
-    | q > dq1 = do
-        newQueue <- enqueueIcebergRemainder os (icebergOrder i1 bi1 shi1 p1 (q1-dq1) s1 mq1 fak1 dq1 0)
-        (o', ob', ts') <- matchSell (decQty o dq1) newQueue
-        (o', ob', (Trade p1 dq1 i1 i shi1 bi1 shi bi):ts') `covers` "MSI-4"
-  where
-    p = price o
-    q = quantity o
-    i = oid o
-    shi = shid o
-    bi = brid o
+    newp = price o
+    newq = quantity o
+    newi = oid o
+    newshi = shid o
+    newbi = brid o
+    headp = price h
+    headq = displayedQty h
+    headi = oid h
+    headshi = shid h
+    headbi = brid h
 
 
 matchNewOrder :: Order -> OrderBook -> Coverage (OrderBook, [Trade])
