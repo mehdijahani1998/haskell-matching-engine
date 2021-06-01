@@ -2,7 +2,7 @@ RandomTest
 AllB1Sn
 GetTCTrace
 GetTCTrades
-test/sink
+testcases/sink
 
 dist
 dist-*
