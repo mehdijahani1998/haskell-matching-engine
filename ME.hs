@@ -189,7 +189,7 @@ displayedQty o@LimitOrder {}   = quantity o
 
 
 decQty :: Order -> Quantity -> Order
-decQty o@(LimitOrder _ _ _ _ q _ _ _) q' = setQty o $ q - q'
+decQty o@(LimitOrder _ _ _ _ q _ _ _) q'        = setQty o $ q - q'
 
 decQty o@(IcebergOrder _ _ _ _ q _ _ _ _ vq) q' = setQties o (q - q') (vq - q')
 
@@ -254,6 +254,14 @@ sameSideQueue :: Order -> OrderBook -> OrderQueue
 sameSideQueue o = queueBySide $ side o
 
 
+oppositeSideQueue :: Order -> OrderBook -> OrderQueue
+oppositeSideQueue o = queueBySide os
+  where
+    os = case side o of
+        Buy  -> Sell
+        Sell -> Buy
+
+
 removeOrderFromOrderBook :: Order -> OrderBook -> OrderBook
 removeOrderFromOrderBook o = applyOnSameSideQueue (removeOrderFromQueue o) o
 
@@ -287,8 +295,10 @@ enqueueOrder' o (o1:os)
     | otherwise = o1:enqueueOrder' o os
 
 
-enqueue :: Order -> OrderBook -> OrderBook
-enqueue o = applyOnSameSideQueue (enqueueOrder o) o
+enqueue :: Maybe Order -> OrderBook -> OrderBook
+enqueue Nothing {} = id
+
+enqueue (Just o)   = applyOnSameSideQueue (enqueueOrder o) o
 
 
 enqueueRemainder :: OrderQueue -> Order -> Coverage OrderQueue
@@ -350,18 +360,19 @@ match o oq@(h:os)
     headq = displayedQty h
 
 
+updateOppositeQueueInBook :: Order -> OrderQueue -> OrderBook -> OrderBook
+updateOppositeQueueInBook o oq ob
+    | side o == Buy  = ob{sellQueue = oq}
+    | side o == Sell = ob{buyQueue = oq}
+    | otherwise = error "invalid Side"
+
+
 matchNewOrder :: Order -> OrderBook -> Coverage (OrderBook, [Trade])
-matchNewOrder o ob
-    | side o == Buy = do
-        (rem, sq, ts) <- (match o (sellQueue ob))
-        case rem of
-            Nothing -> (OrderBook (buyQueue ob) sq, ts) `covers` "MNO-1"
-            Just o' -> (enqueue o' $ OrderBook (buyQueue ob) sq, ts) `covers` "MNO-2"
-    | side o == Sell = do
-        (rem, bq, ts) <- (match o (buyQueue ob))
-        case rem of
-            Nothing -> (OrderBook bq (sellQueue ob), ts) `covers` "MNO-3"
-            Just o' -> (enqueue o' $ OrderBook bq (sellQueue ob), ts) `covers` "MNO-4"
+matchNewOrder o ob = do
+    let oq = oppositeSideQueue o ob
+    (remo, oq', ts) <- match o oq
+    let ob' = updateOppositeQueueInBook o oq' ob
+    (enqueue remo ob', ts) `covers` "MNO"
 
 
 cancelOrder :: OrderID -> Side -> OrderBook -> Coverage (OrderBook, Maybe Order)
