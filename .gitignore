@@ -2,6 +2,7 @@ RandomTest
 AllB1Sn
 GetTCTrace
 GetTCTrades
+test/sink
 
 dist
 dist-*
