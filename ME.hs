@@ -187,15 +187,33 @@ isIceberg LimitOrder {}   = False
 
 
 displayedQty :: Order -> Quantity
-displayedQty order@IcebergOrder {} = visibleQty order
+displayedQty o@IcebergOrder {} = visibleQty o
 
-displayedQty order@LimitOrder {}   = quantity order
+displayedQty o@LimitOrder {}   = quantity o
 
 
 decQty :: Order -> Quantity -> Order
-decQty (LimitOrder i bi shi p q s mq fak) q' = limitOrder i bi shi p (q - q') s mq fak
+decQty o@(LimitOrder _ _ _ _ q _ _ _) q' = setQty o $ q - q'
 
-decQty (IcebergOrder i bi shi p q s mq fak dq vq) q' = icebergOrder i bi shi p (q - q') s mq fak dq (vq - q')
+decQty o@(IcebergOrder _ _ _ _ q _ _ _ _ vq) q' = setQties o (q - q') (vq - q')
+
+
+setQty :: Order -> Quantity -> Order
+setQty (LimitOrder i bi shi p _ s m fak) q' =
+    limitOrder i bi shi p q' s m fak
+
+setQty (IcebergOrder i bi shi p _ s m fak dq vq) q' =
+    icebergOrder i bi shi p q' s m fak dq vq
+
+
+setVisibleQty :: Order -> Quantity -> Order
+setVisibleQty (IcebergOrder i bi shi p q s m fak dq _) vq' =
+    icebergOrder i bi shi p q s m fak dq vq'
+
+
+setQties :: Order -> Quantity -> Quantity -> Order
+setQties (IcebergOrder i bi shi p _ s m fak dq _) q' vq' =
+    icebergOrder i bi shi p q' s m fak dq vq'
 
 
 removeOrderFromQueue :: Order -> OrderQueue -> OrderQueue
@@ -247,11 +265,9 @@ queuesBefore o o'
 
 
 enqueueOrder :: Order -> OrderQueue -> OrderQueue
-enqueueOrder (IcebergOrder i bi shi p q s mq fak dq vq) =
-    enqueueOrder' (IcebergOrder i bi shi p q s mq fak dq (min q dq))
+enqueueOrder o@LimitOrder {} = enqueueOrder' o
 
-enqueueOrder (LimitOrder i bi shi p q s mq fak) =
-    enqueueOrder' (LimitOrder i bi shi p q s mq fak)
+enqueueOrder o@(IcebergOrder _ _ _ _ q _ _ _ dq _) = enqueueOrder' $ setVisibleQty o $ min q dq
 
 
 enqueueOrder' :: Order -> OrderQueue -> OrderQueue
@@ -259,7 +275,7 @@ enqueueOrder' o [] = [o]
 
 enqueueOrder' o (o1:os)
     | queuesBefore o o1 = o:(o1:os)
-    | otherwise = o1:(enqueueOrder' o os)
+    | otherwise = o1:enqueueOrder' o os
 
 
 enqueue :: Order -> OrderBook -> OrderBook
@@ -270,25 +286,21 @@ enqueue o ob
 
 
 enqueueRemainder :: OrderQueue -> Order -> Coverage OrderQueue
-enqueueRemainder os o@LimitOrder {}   = enqueueLimitOrderRemainder os o
+enqueueRemainder os o@LimitOrder {}
+    | q == 0 = os `covers` "ELR-1"
+    | otherwise = enqueueOrder o os `covers` "ELR-2"
+  where
+    q = quantity o
 
-enqueueRemainder os o@IcebergOrder {} = enqueueIcebergRemainder os o
-
-
-enqueueLimitOrderRemainder :: OrderQueue -> Order -> Coverage OrderQueue
-enqueueLimitOrderRemainder os (LimitOrder _ _ _ _ 0 _ _ _) = os `covers` "ELR-1"
-
-enqueueLimitOrderRemainder os _ = error "enqueue non-empty remainder"
-
-
-enqueueIcebergRemainder :: OrderQueue -> Order -> Coverage OrderQueue
-enqueueIcebergRemainder os (IcebergOrder _ _ _ _ 0 _ _ _ _ _) = os `covers` "EIR-1"
-
-enqueueIcebergRemainder os (IcebergOrder i bi shi p q s mq fak dq 0)
-    | q <= dq = enqueueOrder (icebergOrder i bi shi p q s mq fak dq q) os `covers` "EIR-2"
-    | otherwise = enqueueOrder (icebergOrder i bi shi p q s mq fak dq dq) os `covers` "EIR-3"
-
-enqueueIcebergRemainder os _ = error "enqueue non-empty remainder"
+enqueueRemainder os o@IcebergOrder {}
+    | q == 0 = os `covers` "EIR-1"
+    | vq == 0 && q <= dq = enqueueOrder (setVisibleQty o q) os `covers` "EIR-2"
+    | vq == 0 && q > dq = enqueueOrder (setVisibleQty o dq) os `covers` "EIR-3"
+    | otherwise = enqueueOrder o os `covers` "EIR-4"
+  where
+    q = quantity o
+    vq = visibleQty o
+    dq = disclosedQty o
 
 
 matchBuy :: Order -> OrderQueue -> Coverage (Maybe Order, OrderQueue, [Trade])
@@ -382,7 +394,11 @@ adjustPeakSizeOnReplace oldOrder@LimitOrder {} notAdjustedNewOrder = notAdjusted
 
 adjustPeakSizeOnReplace oldOrder@IcebergOrder {} notAdjustedNewOrder@LimitOrder {} = notAdjustedNewOrder
 
-adjustPeakSizeOnReplace oldOrder@(IcebergOrder _ _ _ _ _ _ _ _ olddq oldps) notAdjustedNewOrder@(IcebergOrder _ _ _ _ _ _ _ _ newdq newps)
-    | oldps == olddq = notAdjustedNewOrder{visibleQty = newdq}
-    | oldps < olddq && oldps > newdq = notAdjustedNewOrder{visibleQty = newdq}
+adjustPeakSizeOnReplace oldOrder@IcebergOrder {} notAdjustedNewOrder@IcebergOrder {}
+    | oldvq == olddq = setVisibleQty notAdjustedNewOrder newdq
+    | oldvq < olddq && oldvq > newdq = setVisibleQty notAdjustedNewOrder newdq
     | otherwise = notAdjustedNewOrder
+  where
+    olddq = disclosedQty oldOrder
+    newdq = disclosedQty notAdjustedNewOrder
+    oldvq = visibleQty oldOrder
