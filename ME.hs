@@ -176,6 +176,7 @@ icebergOrder i bi shi p q s m fak dq ps =
 
 decQty :: Order -> Quantity -> Order
 decQty (LimitOrder i bi shi p q s mq fak) q' = limitOrder i bi shi p (q - q') s mq fak
+
 decQty (IcebergOrder i bi shi p q s mq fak dq ps) q' = icebergOrder i bi shi p (q - q') s mq fak (dq -q') ps
 
 
@@ -239,12 +240,14 @@ queuesBefore o o'
 enqueueOrder :: Order -> OrderQueue -> OrderQueue
 enqueueOrder (IcebergOrder i bi shi p q s mq fak dq ps) =
     enqueueOrder' (IcebergOrder i bi shi p q s mq fak (min q ps) ps)
+
 enqueueOrder (LimitOrder i bi shi p q s mq fak) =
     enqueueOrder' (LimitOrder i bi shi p q s mq fak)
 
 
 enqueueOrder' :: Order -> OrderQueue -> OrderQueue
 enqueueOrder' o [] = [o]
+
 enqueueOrder' o (o1:os)
     | queuesBefore o o1 = o:(o1:os)
     | otherwise = o1:(enqueueOrder' o os)
@@ -258,6 +261,7 @@ enqueue o ob
 
 enqueueIcebergRemainder :: OrderQueue -> Order -> Coverage OrderQueue
 enqueueIcebergRemainder os (IcebergOrder _ _ _ _ 0 _ _ _ _ _) = os `covers` "EIR-1"
+
 enqueueIcebergRemainder os (IcebergOrder i bi shi p q s mq fak 0 ps)
     | q <= ps = enqueueOrder (icebergOrder i bi shi p q s mq fak q ps) os `covers` "EIR-2"
     | otherwise = enqueueOrder (icebergOrder i bi shi p q s mq fak ps ps) os `covers` "EIR-3"
@@ -265,6 +269,7 @@ enqueueIcebergRemainder os (IcebergOrder i bi shi p q s mq fak 0 ps)
 
 matchBuy :: Order -> OrderQueue -> Coverage (Maybe Order, OrderQueue, [Trade])
 matchBuy o [] = (Just o, [], []) `covers` "MB-0"
+
 matchBuy o oq@((LimitOrder i1 bi1 shi1 p1 q1 s1 mq1 fak):os)
     | p < p1 = (Just o, oq, []) `covers` "MBL-1"
     | q < q1 = (Nothing, (decQty (head oq) q):os, [Trade p1 q i i1 shi bi shi1 bi1]) `covers` "MBL-2"
