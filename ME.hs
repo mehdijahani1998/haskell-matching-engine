@@ -66,7 +66,7 @@ data Order = LimitOrder
     , minQty       :: Maybe Quantity
     , fillAndKill  :: Bool
     , disclosedQty :: Quantity
-    , peakSize     :: Quantity
+    , visibleQty   :: Quantity
     } deriving (Show, Eq)
 
 type OrderQueue = [Order]
@@ -164,20 +164,14 @@ limitOrder i bi shi p q s m fak =
 
 
 icebergOrder :: OrderID -> BrokerID -> ShareholderID -> Price -> Quantity -> Side -> Maybe Quantity -> Bool -> Quantity -> Quantity -> Order
-icebergOrder i bi shi p q s m fak dq ps =
+icebergOrder i bi shi p q s m fak dq vq =
     assert (i >= 0) $
     assert (p > 0) $
     assert (q > 0) $
     case m of {(Just mq) -> assert (mq > 0); otherwise -> id} $
     assert (dq <= q) $
-    assert (ps > 0 && ps <= dq && ps <= q) $
-    IcebergOrder i bi shi p q s m fak dq ps
-
-
-decQty :: Order -> Quantity -> Order
-decQty (LimitOrder i bi shi p q s mq fak) q' = limitOrder i bi shi p (q - q') s mq fak
-
-decQty (IcebergOrder i bi shi p q s mq fak dq ps) q' = icebergOrder i bi shi p (q - q') s mq fak (dq -q') ps
+    assert (vq > 0 && vq <= dq && vq <= q) $
+    IcebergOrder i bi shi p q s m fak dq vq
 
 
 isIceberg :: Order -> Bool
@@ -187,9 +181,15 @@ isIceberg LimitOrder {}   = False
 
 
 displayedQty :: Order -> Quantity
-displayedQty order@IcebergOrder {} = peakSize order
+displayedQty order@IcebergOrder {} = visibleQty order
 
 displayedQty order@LimitOrder {}   = quantity order
+
+
+decQty :: Order -> Quantity -> Order
+decQty (LimitOrder i bi shi p q s mq fak) q' = limitOrder i bi shi p (q - q') s mq fak
+
+decQty (IcebergOrder i bi shi p q s mq fak dq vq) q' = icebergOrder i bi shi p (q - q') s mq fak dq (vq - q')
 
 
 removeOrderFromQueue :: Order -> OrderQueue -> OrderQueue
@@ -238,8 +238,8 @@ queuesBefore o o'
 
 
 enqueueOrder :: Order -> OrderQueue -> OrderQueue
-enqueueOrder (IcebergOrder i bi shi p q s mq fak dq ps) =
-    enqueueOrder' (IcebergOrder i bi shi p q s mq fak (min q ps) ps)
+enqueueOrder (IcebergOrder i bi shi p q s mq fak dq vq) =
+    enqueueOrder' (IcebergOrder i bi shi p q s mq fak dq (min q dq))
 
 enqueueOrder (LimitOrder i bi shi p q s mq fak) =
     enqueueOrder' (LimitOrder i bi shi p q s mq fak)
@@ -262,9 +262,9 @@ enqueue o ob
 enqueueIcebergRemainder :: OrderQueue -> Order -> Coverage OrderQueue
 enqueueIcebergRemainder os (IcebergOrder _ _ _ _ 0 _ _ _ _ _) = os `covers` "EIR-1"
 
-enqueueIcebergRemainder os (IcebergOrder i bi shi p q s mq fak 0 ps)
-    | q <= ps = enqueueOrder (icebergOrder i bi shi p q s mq fak q ps) os `covers` "EIR-2"
-    | otherwise = enqueueOrder (icebergOrder i bi shi p q s mq fak ps ps) os `covers` "EIR-3"
+enqueueIcebergRemainder os (IcebergOrder i bi shi p q s mq fak dq 0)
+    | q <= dq = enqueueOrder (icebergOrder i bi shi p q s mq fak dq q) os `covers` "EIR-2"
+    | otherwise = enqueueOrder (icebergOrder i bi shi p q s mq fak dq dq) os `covers` "EIR-3"
 
 
 matchBuy :: Order -> OrderQueue -> Coverage (Maybe Order, OrderQueue, [Trade])
@@ -284,14 +284,14 @@ matchBuy o oq@((LimitOrder i1 bi1 shi1 p1 q1 s1 mq1 fak):os)
     shi = shid o
     bi = brid o
 
-matchBuy o ((IcebergOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1 dq1 ps1):os)
-    | p < p1 = (Just o, (icebergOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1 dq1 ps1):os, []) `covers` "MBI-1"
-    | q < dq1 = (Nothing, (icebergOrder i1 bi1 shi1 p1 (q1-q) s1 mq1 fak1 (dq1-q) ps1):os, [Trade p1 q i i1 shi bi shi1 bi1]) `covers` "MBI-2"
+matchBuy o ((IcebergOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1 dq1 vq1):os)
+    | p < p1 = (Just o, (icebergOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1 dq1 vq1):os, []) `covers` "MBI-1"
+    | q < dq1 = (Nothing, (icebergOrder i1 bi1 shi1 p1 (q1-q) s1 mq1 fak1 dq1 (vq1-q)):os, [Trade p1 q i i1 shi bi shi1 bi1]) `covers` "MBI-2"
     | q == dq1 = do
-        newQueue <- enqueueIcebergRemainder os (icebergOrder i1 bi1 shi1 p1 (q1-dq1) s1 mq1 fak1 0 ps1)
+        newQueue <- enqueueIcebergRemainder os (icebergOrder i1 bi1 shi1 p1 (q1-dq1) s1 mq1 fak1 dq1 0)
         (Nothing, newQueue, [Trade p1 q i i1 shi bi shi1 bi1]) `covers` "MBI-3"
     | q > dq1 = do
-        newQueue <- enqueueIcebergRemainder os (icebergOrder i1 bi1 shi1 p1 (q1-dq1) s1 mq1 fak1 0 ps1)
+        newQueue <- enqueueIcebergRemainder os (icebergOrder i1 bi1 shi1 p1 (q1-dq1) s1 mq1 fak1 dq1 0)
         (o', ob', ts') <- matchBuy (decQty o dq1) newQueue
         (o', ob', (Trade p1 dq1 i i1 shi bi shi1 bi1):ts') `covers` "MBI-4"
   where
@@ -319,14 +319,14 @@ matchSell o oq@((LimitOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1):os)
     shi = shid o
     bi = brid o
 
-matchSell o ((IcebergOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1 dq1 ps1):os)
-    | p > p1 = (Just o, (icebergOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1 dq1 ps1):os, []) `covers` "MSI-1"
-    | q < dq1 = (Nothing, (icebergOrder i1 bi1 shi1 p1 (q1-q) s1 mq1 fak1 (dq1-q) ps1):os, [Trade p1 q i1 i shi1 bi1 shi bi]) `covers` "MSI-2"
+matchSell o ((IcebergOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1 dq1 vq1):os)
+    | p > p1 = (Just o, (icebergOrder i1 bi1 shi1 p1 q1 s1 mq1 fak1 dq1 vq1):os, []) `covers` "MSI-1"
+    | q < dq1 = (Nothing, (icebergOrder i1 bi1 shi1 p1 (q1-q) s1 mq1 fak1 dq1 (vq1-q)):os, [Trade p1 q i1 i shi1 bi1 shi bi]) `covers` "MSI-2"
     | q == dq1 = do
-        newQueue <- enqueueIcebergRemainder os (icebergOrder i1 bi1 shi1 p1 (q1-dq1) s1 mq1 fak1 0 ps1)
+        newQueue <- enqueueIcebergRemainder os (icebergOrder i1 bi1 shi1 p1 (q1-dq1) s1 mq1 fak1 dq1 0)
         (Nothing, newQueue, [Trade p1 q i1 i shi1 bi1 shi bi])  `covers` "MSI-3"
     | q > dq1 = do
-        newQueue <- enqueueIcebergRemainder os (icebergOrder i1 bi1 shi1 p1 (q1-dq1) s1 mq1 fak1 0 ps1)
+        newQueue <- enqueueIcebergRemainder os (icebergOrder i1 bi1 shi1 p1 (q1-dq1) s1 mq1 fak1 dq1 0)
         (o', ob', ts') <- matchSell (decQty o dq1) newQueue
         (o', ob', (Trade p1 dq1 i1 i shi1 bi1 shi bi):ts') `covers` "MSI-4"
   where
@@ -377,6 +377,6 @@ adjustPeakSizeOnReplace oldOrder@LimitOrder {} notAdjustedNewOrder = notAdjusted
 adjustPeakSizeOnReplace oldOrder@IcebergOrder {} notAdjustedNewOrder@LimitOrder {} = notAdjustedNewOrder
 
 adjustPeakSizeOnReplace oldOrder@(IcebergOrder _ _ _ _ _ _ _ _ olddq oldps) notAdjustedNewOrder@(IcebergOrder _ _ _ _ _ _ _ _ newdq newps)
-    | oldps == olddq = notAdjustedNewOrder{peakSize = newdq}
-    | oldps < olddq && oldps > newdq = notAdjustedNewOrder{peakSize = newdq}
+    | oldps == olddq = notAdjustedNewOrder{visibleQty = newdq}
+    | oldps < olddq && oldps > newdq = notAdjustedNewOrder{visibleQty = newdq}
     | otherwise = notAdjustedNewOrder
