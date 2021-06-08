@@ -55,23 +55,17 @@ updateSellersCredit ts (MEState ob ci si rp) =
 
 
 creditLimitProc :: Decorator
-creditLimitProc handler rq s = case rq of
-    (NewOrderRq o) -> do
-        (rs, s') <- handler rq s
-        case status rs of
-            Accepted -> if creditLimitCheck o s (trades rs) s'
-                then (rs, updateCreditInfo o (trades rs) s') `covers` "CLP1"
-                else (NewOrderRs Rejected [], s) `covers` "CLP2"
-            Rejected -> (rs, s') `covers` "CLP3"
-    (CancelOrderRq rqid oid side) -> do
-        (rs, s') <- handler rq s
-        (rs, s') `covers` "CLP4"
-    (ReplaceOrderRq oldoid o) -> do
-        (rs, s') <- handler rq s
-        case status rs of
-            Accepted -> do
+creditLimitProc handler rq s = do
+    (rs, s') <- handler rq s
+    case status rs of
+        Accepted -> case rq of
+            (NewOrderRq o) -> do
                 if creditLimitCheck o s (trades rs) s'
-                    then (rs, updateCreditInfo o (trades rs) s') `covers` "CLP6"
-                    else (NewOrderRs Rejected [], s) `covers` "CLP7"
-            Rejected -> (rs, s') `covers` "CLP8"
-    _ -> handler rq s
+                    then (rs, updateCreditInfo o (trades rs) s') `covers` "CLP1"
+                    else (NewOrderRs Rejected [], s) `covers` "CLP2"
+            (ReplaceOrderRq oldoid o) -> do
+                if creditLimitCheck o s (trades rs) s'
+                    then (rs, updateCreditInfo o (trades rs) s') `covers` "CLP3"
+                    else (NewOrderRs Rejected [], s) `covers` "CLP4"
+            _ -> (rs, s') `covers` "CLP5"
+        Rejected -> (rs, s') `covers`  "CLP6"

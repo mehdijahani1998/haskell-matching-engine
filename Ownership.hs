@@ -6,25 +6,20 @@ import           ME
 
 
 ownershipCheck :: Int -> Decorator
-ownershipCheck maxOwnership handler rq s = case rq of
-    (NewOrderRq o) -> do
-        (rs, s') <- handler rq s
-        case status rs of
-            Accepted ->  if ownershipPreCheck maxOwnership o Nothing s
-                then (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC1"
-                else (NewOrderRs Rejected [], s) `covers` "OSC2"
-            Rejected -> (rs, s') `covers` "OSC3"
-    (CancelOrderRq rqid oid side) -> do
-        (rs, s') <- handler rq s
-        (rs, s') `covers` "OSC4"
-    (ReplaceOrderRq oldoid o) -> do
-        (rs, s') <- handler rq s
-        case status rs of
-            Accepted ->  if ownershipPreCheck maxOwnership o (oldOrder rs) s
-                then (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC5"
-                else (ReplaceOrderRs Rejected Nothing [], s) `covers` "OSC6"
-            Rejected -> (rs, s') `covers` "OSC7"
-    _ -> handler rq s
+ownershipCheck maxOwnership handler rq s = do
+    (rs, s') <- handler rq s
+    case status rs of
+        Accepted -> case rq of
+            (NewOrderRq o) -> do
+                if ownershipPreCheck maxOwnership o Nothing s
+                    then (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC1"
+                    else (NewOrderRs Rejected [], s) `covers` "OSC2"
+            (ReplaceOrderRq oldoid o) -> do
+                if ownershipPreCheck maxOwnership o (oldOrder rs) s
+                    then (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC3"
+                    else (ReplaceOrderRs Rejected Nothing [], s) `covers` "OSC4"
+            _ -> (rs, s') `covers` "OSC5"
+        Rejected -> (rs, s') `covers`  "OSC6"
 
 
 updateOwnershipInfo :: [Trade] -> MEState -> MEState
@@ -57,7 +52,7 @@ quantityInQueue o q =
 
 ownershipPreCheck :: Int -> Order -> Maybe Order -> MEState -> Bool
 ownershipPreCheck maxOwnership o oldOrder (MEState ob _ ownership _) = case side o of
-    Buy -> (ownership!shi) + (quantity o) + (totalQuantity Buy shi ob) - (quantityInBook oldOrder ob) < maxOwnership
+    Buy  -> (ownership!shi) + (quantity o) + (totalQuantity Buy shi ob) - (quantityInBook oldOrder ob) < maxOwnership
     Sell -> (quantity o) + (totalQuantity Sell shi ob) - (quantityInBook oldOrder ob) <= (ownership!shi)
   where
     shi = shid o
