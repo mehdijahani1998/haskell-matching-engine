@@ -15,7 +15,7 @@ module ME
     , MEState (..)
     , Request (..)
     , Response (..)
-    , OrderResponseStatus (..)
+    , ResponseStatus (..)
     , Handler
     , Decorator
     , initMEState
@@ -121,24 +121,31 @@ data Request = NewOrderRq
     { newReferencePrice :: Int
     } deriving (Show, Eq)
 
-data OrderResponseStatus = Accepted | Rejected deriving (Show, Eq)
+
+data ResponseStatus = Accepted | Rejected deriving (Show, Eq)
+
+accepted :: ResponseStatus -> Bool
+accepted Accepted = True
+
+accepted Rejected = False
+
 
 data Response = NewOrderRs
-    { status :: OrderResponseStatus
+    { status :: ResponseStatus
     , trades :: [Trade]
     } | CancelOrderRs
-    { status   :: OrderResponseStatus
+    { status   :: ResponseStatus
     , oldOrder :: Maybe Order
     } | ReplaceOrderRs
-    { status   :: OrderResponseStatus
+    { status   :: ResponseStatus
     , oldOrder :: Maybe Order
     , trades   :: [Trade]
     } | SetCreditRs
-    { success :: Bool
+    { status :: ResponseStatus
     } | SetOwnershipRs
-    { success :: Bool
+    { status :: ResponseStatus
     } | SetReferencePriceRs
-    { success :: Bool
+    { status :: ResponseStatus
     } deriving (Show, Eq)
 
 

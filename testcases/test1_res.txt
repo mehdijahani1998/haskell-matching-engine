@@ -22,21 +22,21 @@ NewOrderRq		Limit	4	4	3	10	2	SELL	0	---	0
 ReplaceOrderRq	4	Limit	5	4	3	3	2	SELL	0	---	0
 NewOrderRq		Iceberg	6	6	6	3	19	SELL	0	---	4
 NewOrderRq		Iceberg	7	7	7	3	19	BUY 	0	---	4
-SetReferencePriceRs	Successful
-SetCreditRs	Successful
-SetCreditRs	Successful
-SetCreditRs	Successful
-SetCreditRs	Successful
-SetCreditRs	Successful
-SetCreditRs	Successful
-SetCreditRs	Successful
-SetOwnershipRs	Successful
-SetOwnershipRs	Successful
-SetOwnershipRs	Successful
-SetOwnershipRs	Successful
-SetOwnershipRs	Successful
-SetOwnershipRs	Successful
-SetOwnershipRs	Successful
+SetReferencePriceRs	Accepted
+SetCreditRs	Accepted
+SetCreditRs	Accepted
+SetCreditRs	Accepted
+SetCreditRs	Accepted
+SetCreditRs	Accepted
+SetCreditRs	Accepted
+SetCreditRs	Accepted
+SetOwnershipRs	Accepted
+SetOwnershipRs	Accepted
+SetOwnershipRs	Accepted
+SetOwnershipRs	Accepted
+SetOwnershipRs	Accepted
+SetOwnershipRs	Accepted
+SetOwnershipRs	Accepted
 NewOrderRs	Rejected
 	Trades 0
 NewOrderRs	Accepted

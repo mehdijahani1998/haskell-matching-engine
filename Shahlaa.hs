@@ -81,18 +81,18 @@ fRequest (SetReferencePriceRq rp) =
 
 
 fResponse :: Response -> String
-fResponse (NewOrderRs status ts) =
-    printf "NewOrderRs\t%s\n%s" (if status == Accepted then "Accepted" else "Rejected") (fTrades ts)
-fResponse (CancelOrderRs status _) =
-    printf "CancelOrderRs\t%s\n" (if status == Accepted then "Accepted" else "Rejected")
-fResponse (ReplaceOrderRs status _ ts) =
-    printf "ReplaceOrderRs\t%s\n%s" (if status == Accepted then "Accepted" else "Rejected") (fTrades ts)
+fResponse (NewOrderRs s ts) =
+    printf "NewOrderRs\t%s\n%s" (show s) (fTrades ts)
+fResponse (CancelOrderRs s _) =
+    printf "CancelOrderRs\t%s\n" (show s)
+fResponse (ReplaceOrderRs s _ ts) =
+    printf "ReplaceOrderRs\t%s\n%s" (show s) (fTrades ts)
 fResponse (SetCreditRs s) =
-    printf "SetCreditRs\t%s\n" (if s then "Successful" else "Failed")
+    printf "SetCreditRs\t%s\n" (show s)
 fResponse (SetOwnershipRs s) =
-    printf "SetOwnershipRs\t%s\n" (if s then "Successful" else "Failed")
+    printf "SetOwnershipRs\t%s\n" (show s)
 fResponse (SetReferencePriceRs s) =
-    printf "SetReferencePriceRs\t%s\n" (if s then "Successful" else "Failed")
+    printf "SetReferencePriceRs\t%s\n" (show s)
 
 
 fInput :: [Request] -> String

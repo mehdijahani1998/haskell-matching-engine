@@ -79,10 +79,10 @@ requestHandler rq@(ReplaceOrderRq oldoid o) s =
     replaceOrderHandler rq s
 
 requestHandler (SetCreditRq b c) s = do
-    return (SetCreditRs True, s { creditInfo = (insert b c (creditInfo s)) })
+    return (SetCreditRs Accepted, s { creditInfo = (insert b c (creditInfo s)) })
 
 requestHandler (SetOwnershipRq sh i) s = do
-    return (SetOwnershipRs True, s { ownershipInfo = (insert sh i (ownershipInfo s)) })
+    return (SetOwnershipRs Accepted, s { ownershipInfo = (insert sh i (ownershipInfo s)) })
 
 requestHandler (SetReferencePriceRq rp) s = do
-    return (SetReferencePriceRs True, s { referencePrice = rp })
+    return (SetReferencePriceRs Accepted, s { referencePrice = rp })
