@@ -54,24 +54,17 @@ updateSellersCredit ts (MEState ob ci si rp) =
         filter (\t -> buyerBrId t /= sellerBrId t) ts
 
 
+creditLimitProcOnAccept :: Order -> Response -> MEState -> Response -> MEState -> Coverage (Response, MEState)
+creditLimitProcOnAccept o emptyResponse s rs s' =
+    if creditLimitCheck o s (trades rs) s'
+        then (rs, updateCreditInfo o (trades rs) s') `covers` "CLP1"
+        else (emptyResponse, s) `covers` "CLP2"
+
 creditLimitProc :: Decorator
-creditLimitProc handler rq s = case rq of
-    (NewOrderRq o) -> do
-        (rs, s') <- handler rq s
-        case status rs of
-            Accepted -> if creditLimitCheck o s (trades rs) s'
-                then (rs, updateCreditInfo o (trades rs) s') `covers` "CLP1"
-                else (NewOrderRs Rejected [], s) `covers` "CLP2"
-            Rejected -> (rs, s') `covers` "CLP3"
-    (CancelOrderRq rqid oid side) -> do
-        (rs, s') <- handler rq s
-        (rs, s') `covers` "CLP4"
-    (ReplaceOrderRq oldoid o) -> do
-        (rs, s') <- handler rq s
-        case status rs of
-            Accepted -> do
-                if creditLimitCheck o s (trades rs) s'
-                    then (rs, updateCreditInfo o (trades rs) s') `covers` "CLP6"
-                    else (NewOrderRs Rejected [], s) `covers` "CLP7"
-            Rejected -> (rs, s') `covers` "CLP8"
-    _ -> handler rq s
+creditLimitProc handler rq@(NewOrderRq o) s =
+    runOnAccept handler rq s "CLP" $ creditLimitProcOnAccept o $ NewOrderRs Rejected []
+
+creditLimitProc handler rq@(ReplaceOrderRq _ o) s =
+    runOnAccept handler rq s "CLP" $ creditLimitProcOnAccept o $ ReplaceOrderRs Rejected Nothing []
+
+creditLimitProc handler rq s = handler rq s

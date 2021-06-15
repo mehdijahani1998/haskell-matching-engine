@@ -22,6 +22,7 @@ module ME
     , limitOrder
     , icebergOrder
     , removeOrderFromOrderBook
+    , runOnAccept
     , valueTraded
     , matchNewOrder
     , cancelOrder
@@ -151,6 +152,14 @@ data Response = NewOrderRs
 
 type Handler = Request -> MEState -> Coverage (Response, MEState)
 type Decorator = Handler -> Handler
+
+
+runOnAccept :: Handler -> Request -> MEState -> String -> (MEState -> Response -> MEState -> Coverage (Response, MEState)) -> Coverage (Response, MEState)
+runOnAccept handler rq s stmt f = do
+    (rs, s') <- handler rq s
+    case status rs of
+        Accepted -> f s rs s'
+        Rejected -> (rs, s') `covers` (stmt ++ "-AR")
 
 
 valueTraded :: Trade -> Int

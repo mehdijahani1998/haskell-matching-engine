@@ -5,26 +5,20 @@ import           Data.Map
 import           ME
 
 
+ownershipCheckOnAccept :: Int -> Order -> (Response -> Maybe Order) -> Response -> MEState -> Response -> MEState -> Coverage (Response, MEState)
+ownershipCheckOnAccept maxOwnership o oldOrderFunc emptyResponse s rs s' = do
+    if ownershipPreCheck maxOwnership o (oldOrderFunc rs) s
+        then (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC1"
+        else (emptyResponse, s) `covers` "OSC2"
+
 ownershipCheck :: Int -> Decorator
-ownershipCheck maxOwnership handler rq s = case rq of
-    (NewOrderRq o) -> do
-        (rs, s') <- handler rq s
-        case status rs of
-            Accepted ->  if ownershipPreCheck maxOwnership o Nothing s
-                then (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC1"
-                else (NewOrderRs Rejected [], s) `covers` "OSC2"
-            Rejected -> (rs, s') `covers` "OSC3"
-    (CancelOrderRq rqid oid side) -> do
-        (rs, s') <- handler rq s
-        (rs, s') `covers` "OSC4"
-    (ReplaceOrderRq oldoid o) -> do
-        (rs, s') <- handler rq s
-        case status rs of
-            Accepted ->  if ownershipPreCheck maxOwnership o (oldOrder rs) s
-                then (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC5"
-                else (ReplaceOrderRs Rejected Nothing [], s) `covers` "OSC6"
-            Rejected -> (rs, s') `covers` "OSC7"
-    _ -> handler rq s
+ownershipCheck maxOwnership handler rq@(NewOrderRq o) s =
+    runOnAccept handler rq s "OSC" $ ownershipCheckOnAccept maxOwnership o (const Nothing) $ NewOrderRs Rejected []
+
+ownershipCheck maxOwnership handler rq@(ReplaceOrderRq _ o) s =
+    runOnAccept handler rq s "OSC" $ ownershipCheckOnAccept maxOwnership o oldOrder $ ReplaceOrderRs Rejected Nothing []
+
+ownershipCheck _ handler rq s = handler rq s
 
 
 updateOwnershipInfo :: [Trade] -> MEState -> MEState

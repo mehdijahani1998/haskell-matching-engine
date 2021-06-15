@@ -4,29 +4,21 @@ import           Coverage
 import           ME
 
 
-pricebandCheck :: Float -> Float -> Decorator
-pricebandCheck minPriceBand maxPriceBand handler rq s = case rq of
-    (NewOrderRq o) -> do
-        (rs, s') <- handler rq s
-        let rp = referencePrice s
-        case status rs of
-            Accepted ->  if pricebandPreCheck minPriceBand maxPriceBand rp o
-                then (rs, s') `covers` "PBC1"
-                else (NewOrderRs Rejected [], s) `covers` "PBC2"
-            Rejected -> (rs, s') `covers` "PBC3"
-    (CancelOrderRq rqid oid side) -> do
-        (rs, s') <- handler rq s
-        (rs, s') `covers` "PBC4"
-    (ReplaceOrderRq oldoid o) -> do
-        (rs, s') <- handler rq s
-        let rp = referencePrice s
-        case status rs of
-            Accepted ->  if pricebandPreCheck minPriceBand maxPriceBand rp o
-                then (rs, s') `covers` "PBC5"
-                else (ReplaceOrderRs Rejected Nothing [], s) `covers` "PBC6"
-            Rejected -> (rs, s') `covers` "PBC7"
-    _ -> handler rq s
+priceBandCheckOnAccept :: Float -> Float -> Order -> Response -> MEState -> Response -> MEState -> Coverage (Response, MEState)
+priceBandCheckOnAccept minPriceBand maxPriceBand o emptyResponse s rs s' = do
+    let rp = referencePrice s
+    if pricebandPreCheck minPriceBand maxPriceBand rp o
+        then (rs, s') `covers` "PBC1"
+        else (emptyResponse, s) `covers` "PBC2"
 
+pricebandCheck :: Float -> Float -> Decorator
+pricebandCheck minPriceBand maxPriceBand handler rq@(NewOrderRq o) s =
+    runOnAccept handler rq s "PBC" $ priceBandCheckOnAccept minPriceBand maxPriceBand o $ NewOrderRs Rejected []
+
+pricebandCheck minPriceBand maxPriceBand handler rq@(ReplaceOrderRq _ o) s =
+    runOnAccept handler rq s "PBC" $ priceBandCheckOnAccept minPriceBand maxPriceBand o $ ReplaceOrderRs Rejected Nothing []
+
+pricebandCheck _ _ handler rq s = handler rq s
 
 
 pricebandPreCheck :: Float -> Float -> Int -> Order -> Bool
