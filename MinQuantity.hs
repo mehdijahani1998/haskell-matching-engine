@@ -19,4 +19,4 @@ pricebandCheckByType rq@(NewOrderRq o) s rs s' =
             else (reject rq, s) `covers` "MQC3"
 
 pricebandCheckByType _ _ rs s' =
-    (rs, s') `covers`  "MQC4"
+    (rs, s') `covers`  "MQC-P"

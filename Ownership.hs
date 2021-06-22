@@ -12,18 +12,34 @@ ownershipCheck maxOwnership =
 
 
 ownershipCheckByType :: Int -> PartialDecorator
-ownershipCheckByType maxOwnership rq@(NewOrderRq o) s rs s' =
-    if ownershipPreCheck maxOwnership o Nothing s
-        then (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC1"
-        else (reject rq, s) `covers` "OSC2"
+ownershipCheckByType maxOwnership rq@NewOrderRq {} s rs s' =
+    ownershipCheckForArrivingOrder maxOwnership rq s rs s'
 
-ownershipCheckByType maxOwnership rq@(ReplaceOrderRq _ o) s rs s' =
-    if ownershipPreCheck maxOwnership o (oldOrder rs) s
-        then (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC3"
-        else (reject rq, s) `covers` "OSC4"
+ownershipCheckByType maxOwnership rq@ReplaceOrderRq {} s rs s' =
+    ownershipCheckForArrivingOrder maxOwnership rq s rs s'
 
 ownershipCheckByType _ _ _ rs s' =
-    (rs, s') `covers` "OSC5"
+    (rs, s') `covers` "OSC-P"
+
+
+getOldOrder :: Response -> Maybe Order
+getOldOrder rs@ReplaceOrderRs {} =
+    oldOrder rs
+
+getOldOrder rs@CancelOrderRs {} =
+    oldOrder rs
+
+getOldOrder _ =
+    Nothing
+
+
+ownershipCheckForArrivingOrder :: Int -> PartialDecorator
+ownershipCheckForArrivingOrder maxOwnership rq s rs s' = do
+    let o = order rq
+    let oldo = getOldOrder rs
+    if ownershipPreCheck maxOwnership o oldo s
+        then (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC1"
+        else (reject rq, s) `covers` "OSC2"
 
 
 updateOwnershipInfo :: [Trade] -> MEState -> MEState

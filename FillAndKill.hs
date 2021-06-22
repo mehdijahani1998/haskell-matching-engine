@@ -22,4 +22,4 @@ fillAndKillProcByType  (NewOrderRq o) _ rs s' =
         else (rs, s') `covers` "FKP2"
 
 fillAndKillProcByType _ _ rs s' =
-    (rs, s') `covers` "FKP3"
+    (rs, s') `covers` "FKP-P"
