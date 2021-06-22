@@ -2,6 +2,7 @@ module Ownership (ownershipCheck) where
 
 import           Coverage
 import           Data.Map
+import           Decorator
 import           ME
 
 

@@ -1,7 +1,8 @@
 module CreditLimit (creditLimitProc) where
 
 import           Coverage
-import qualified Data.Map as Map
+import qualified Data.Map  as Map
+import           Decorator
 import           ME
 
 

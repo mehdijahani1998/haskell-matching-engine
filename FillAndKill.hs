@@ -1,6 +1,7 @@
 module FillAndKill (fillAndKillProc) where
 
 import           Coverage
+import           Decorator
 import           ME
 
 

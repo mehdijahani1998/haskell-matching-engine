@@ -3,6 +3,7 @@ module MEService (requestHandler) where
 import           CreditLimit
 import           Data.Map
 import           Data.Maybe
+import           Decorator
 import           FillAndKill
 import           ME
 import           MinQuantity

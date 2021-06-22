@@ -1,6 +1,7 @@
 module MinQuantity (minQuantityCheck) where
 
 import           Coverage
+import           Decorator
 import           ME
 
 

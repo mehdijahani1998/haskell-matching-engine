@@ -1,6 +1,7 @@
 module PriceBand (pricebandCheck) where
 
 import           Coverage
+import           Decorator
 import           ME
 
 
