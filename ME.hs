@@ -30,6 +30,7 @@ module ME
     , sameSideQueue
     , reject
     ) where
+
 import           Control.Exception (assert)
 import           Coverage
 import qualified Data.List         as List
