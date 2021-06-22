@@ -11,12 +11,12 @@ minQuantityCheck =
 
 
 pricebandCheckByType :: PartialDecorator
-pricebandCheckByType (NewOrderRq o) s rs s' =
+pricebandCheckByType rq@(NewOrderRq o) s rs s' =
     case minQty o of
         Nothing -> (rs, s') `covers` "MQC1"
         Just mq -> if sum (Prelude.map quantityTraded $ trades rs) >= mq
             then (rs, s') `covers` "MQC2"
-            else (rejectedNewOrderRs, s) `covers` "MQC3"
+            else (reject rq, s) `covers` "MQC3"
 
 pricebandCheckByType _ _ rs s' =
     (rs, s') `covers`  "MQC4"

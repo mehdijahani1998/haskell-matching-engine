@@ -11,17 +11,17 @@ pricebandCheck minPriceBand maxPriceBand =
 
 
 pricebandCheckByType :: Float -> Float -> PartialDecorator
-pricebandCheckByType minPriceBand maxPriceBand (NewOrderRq o) s rs s' = do
+pricebandCheckByType minPriceBand maxPriceBand rq@(NewOrderRq o) s rs s' = do
     let rp = referencePrice s
     if pricebandPreCheck minPriceBand maxPriceBand rp o
         then (rs, s') `covers` "PBC1"
-        else (rejectedNewOrderRs, s) `covers` "PBC2"
+        else (reject rq, s) `covers` "PBC2"
 
-pricebandCheckByType minPriceBand maxPriceBand (ReplaceOrderRq _ o) s rs s' = do
+pricebandCheckByType minPriceBand maxPriceBand rq@(ReplaceOrderRq _ o) s rs s' = do
     let rp = referencePrice s
     if pricebandPreCheck minPriceBand maxPriceBand rp o
         then (rs, s') `covers` "PBC3"
-        else (rejectedReplaceOrderRs, s) `covers` "PBC4"
+        else (reject rq, s) `covers` "PBC4"
 
 pricebandCheckByType _ _ _ _ rs s' =
     (rs, s') `covers` "PBC5"
