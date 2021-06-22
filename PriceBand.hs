@@ -15,13 +15,13 @@ pricebandCheckByType minPriceBand maxPriceBand (NewOrderRq o) s rs s' = do
     let rp = referencePrice s
     if pricebandPreCheck minPriceBand maxPriceBand rp o
         then (rs, s') `covers` "PBC1"
-        else (NewOrderRs Rejected [], s) `covers` "PBC2"
+        else (rejectedNewOrderRs, s) `covers` "PBC2"
 
 pricebandCheckByType minPriceBand maxPriceBand (ReplaceOrderRq _ o) s rs s' = do
     let rp = referencePrice s
     if pricebandPreCheck minPriceBand maxPriceBand rp o
         then (rs, s') `covers` "PBC3"
-        else (ReplaceOrderRs Rejected Nothing [], s) `covers` "PBC4"
+        else (rejectedReplaceOrderRs, s) `covers` "PBC4"
 
 pricebandCheckByType _ _ _ _ rs s' =
     (rs, s') `covers` "PBC5"

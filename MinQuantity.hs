@@ -16,7 +16,7 @@ pricebandCheckByType (NewOrderRq o) s rs s' =
         Nothing -> (rs, s') `covers` "MQC1"
         Just mq -> if sum (Prelude.map quantityTraded $ trades rs) >= mq
             then (rs, s') `covers` "MQC2"
-            else (NewOrderRs Rejected [], s) `covers` "MQC3"
+            else (rejectedNewOrderRs, s) `covers` "MQC3"
 
 pricebandCheckByType _ _ rs s' =
     (rs, s') `covers`  "MQC4"

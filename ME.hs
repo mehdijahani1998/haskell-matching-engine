@@ -28,6 +28,9 @@ module ME
     , replaceOrderInPlace
     , queueBySide
     , sameSideQueue
+    , rejectedNewOrderRs
+    , rejectedReplaceOrderRs
+    , rejectedCancelOrderRs
     ) where
 import           Control.Exception (assert)
 import           Coverage
@@ -145,6 +148,30 @@ data Response = NewOrderRs
     } | SetReferencePriceRs
     { status :: ResponseStatus
     } deriving (Show, Eq)
+
+
+rejectedNewOrderRs :: Response
+rejectedNewOrderRs = NewOrderRs Rejected []
+
+
+rejectedReplaceOrderRs :: Response
+rejectedReplaceOrderRs = ReplaceOrderRs Rejected Nothing []
+
+
+rejectedCancelOrderRs :: Response
+rejectedCancelOrderRs = CancelOrderRs Rejected Nothing
+
+
+rejectedSetCreditRs :: Response
+rejectedSetCreditRs = SetCreditRs Rejected
+
+
+rejectedSetOwnershipRs :: Response
+rejectedSetOwnershipRs = SetOwnershipRs Rejected
+
+
+rejectedSetReferencePriceRs :: Response
+rejectedSetReferencePriceRs = SetReferencePriceRs Rejected
 
 
 valueTraded :: Trade -> Int

@@ -15,12 +15,12 @@ ownershipCheckByType :: Int -> PartialDecorator
 ownershipCheckByType maxOwnership (NewOrderRq o) s rs s' =
     if ownershipPreCheck maxOwnership o Nothing s
         then (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC1"
-        else (NewOrderRs Rejected [], s) `covers` "OSC2"
+        else (rejectedNewOrderRs, s) `covers` "OSC2"
 
 ownershipCheckByType maxOwnership (ReplaceOrderRq _ o) s rs s' =
     if ownershipPreCheck maxOwnership o (oldOrder rs) s
         then (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC3"
-        else (ReplaceOrderRs Rejected Nothing [], s) `covers` "OSC4"
+        else (rejectedReplaceOrderRs, s) `covers` "OSC4"
 
 ownershipCheckByType _ _ _ rs s' =
     (rs, s') `covers` "OSC5"
