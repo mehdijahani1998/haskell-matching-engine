@@ -18,6 +18,8 @@ module ME
     , ResponseStatus (..)
     , Handler
     , Decorator
+    , PartialDecorator
+    , decorateOnAccept
     , initMEState
     , limitOrder
     , icebergOrder
@@ -151,6 +153,15 @@ data Response = NewOrderRs
 
 type Handler = Request -> MEState -> Coverage (Response, MEState)
 type Decorator = Handler -> Handler
+type PartialDecorator = Request -> MEState -> Response -> MEState -> Coverage (Response, MEState)
+
+
+decorateOnAccept :: String -> PartialDecorator -> Decorator
+decorateOnAccept stmt decorateByType handler rq s = do
+    (rs, s') <- handler rq s
+    case status rs of
+        Accepted -> decorateByType rq s rs s'
+        Rejected -> (rs, s') `covers`  (stmt ++ "-R")
 
 
 valueTraded :: Trade -> Int

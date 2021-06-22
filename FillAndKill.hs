@@ -10,13 +10,15 @@ removeOrderFromState o s =
 
 
 fillAndKillProc :: Decorator
-fillAndKillProc handler rq s = do
-    (rs, s') <- handler rq s
-    case status rs of
-        Accepted -> case rq of
-            (NewOrderRq o) -> do
-                if fillAndKill o
-                    then (rs, removeOrderFromState o s') `covers` "FKP1"
-                    else (rs, s') `covers` "FKP2"
-            _ -> (rs, s') `covers` "FKP3"
-        Rejected -> (rs, s') `covers`  "FKP4"
+fillAndKillProc =
+    decorateOnAccept "FKP" fillAndKillProcByType
+
+
+fillAndKillProcByType :: PartialDecorator
+fillAndKillProcByType  (NewOrderRq o) _ rs s' =
+    if fillAndKill o
+        then (rs, removeOrderFromState o s') `covers` "FKP1"
+        else (rs, s') `covers` "FKP2"
+
+fillAndKillProcByType _ _ rs s' =
+    (rs, s') `covers` "FKP3"

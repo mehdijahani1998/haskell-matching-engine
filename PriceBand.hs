@@ -5,22 +5,25 @@ import           ME
 
 
 pricebandCheck :: Float -> Float -> Decorator
-pricebandCheck minPriceBand maxPriceBand handler rq s = do
-    (rs, s') <- handler rq s
-    case status rs of
-        Accepted -> case rq of
-            (NewOrderRq o) -> do
-                let rp = referencePrice s
-                if pricebandPreCheck minPriceBand maxPriceBand rp o
-                    then (rs, s') `covers` "PBC1"
-                    else (NewOrderRs Rejected [], s) `covers` "PBC2"
-            (ReplaceOrderRq oldoid o) -> do
-                let rp = referencePrice s
-                if pricebandPreCheck minPriceBand maxPriceBand rp o
-                    then (rs, s') `covers` "PBC3"
-                    else (ReplaceOrderRs Rejected Nothing [], s) `covers` "PBC4"
-            _ -> (rs, s') `covers` "PBC5"
-        Rejected -> (rs, s') `covers`  "PBC6"
+pricebandCheck minPriceBand maxPriceBand =
+    decorateOnAccept "PBC" $ pricebandCheckByType minPriceBand maxPriceBand
+
+
+pricebandCheckByType :: Float -> Float -> PartialDecorator
+pricebandCheckByType minPriceBand maxPriceBand (NewOrderRq o) s rs s' = do
+    let rp = referencePrice s
+    if pricebandPreCheck minPriceBand maxPriceBand rp o
+        then (rs, s') `covers` "PBC1"
+        else (NewOrderRs Rejected [], s) `covers` "PBC2"
+
+pricebandCheckByType minPriceBand maxPriceBand (ReplaceOrderRq _ o) s rs s' = do
+    let rp = referencePrice s
+    if pricebandPreCheck minPriceBand maxPriceBand rp o
+        then (rs, s') `covers` "PBC3"
+        else (ReplaceOrderRs Rejected Nothing [], s) `covers` "PBC4"
+
+pricebandCheckByType _ _ _ _ rs s' =
+    (rs, s') `covers` "PBC5"
 
 
 pricebandPreCheck :: Float -> Float -> Int -> Order -> Bool
