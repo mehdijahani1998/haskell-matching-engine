@@ -63,7 +63,7 @@ fTrade (Trade p q bid sid _ _ _ _) =
 
 
 fTrades :: [Trade] -> String
-fTrades ts = foldl (++) (printf "\tTrades %d\n" $ length ts) $ map fTrade ts
+fTrades ts = foldl (++) (printf "\tTrades\t%d\n" $ length ts) $ map fTrade ts
 
 fRequest :: Request -> String
 fRequest (NewOrderRq o) =

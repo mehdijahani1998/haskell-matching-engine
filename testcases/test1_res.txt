@@ -38,22 +38,22 @@ SetOwnershipRs	Accepted
 SetOwnershipRs	Accepted
 SetOwnershipRs	Accepted
 NewOrderRs	Rejected
-	Trades 0
+	Trades	0
 NewOrderRs	Accepted
-	Trades 0
+	Trades	0
 CancelOrderRs	Accepted
 NewOrderRs	Accepted
-	Trades 0
+	Trades	0
 NewOrderRs	Accepted
-	Trades 0
+	Trades	0
 ReplaceOrderRs	Accepted
-	Trades 1
+	Trades	1
 	9	2	3	5
 NewOrderRs	Accepted
-	Trades 1
+	Trades	1
 	9	1	3	6
 NewOrderRs	Accepted
-	Trades 5
+	Trades	5
 	3	4	7	6
 	3	4	7	6
 	3	4	7	6
