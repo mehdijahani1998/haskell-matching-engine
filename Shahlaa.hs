@@ -59,7 +59,7 @@ fOrder (IcebergOrder i bi shi p q s mq fak dq ps) =
 
 fTrade :: Trade -> String
 fTrade (Trade p q bid sid _ _ _ _) =
-    printf "\t%d\t%d\t%d\t%d\n" p q bid sid
+    printf "\tTrade\t%d\t%d\t%d\t%d\n" p q bid sid
 
 
 fTrades :: [Trade] -> String
