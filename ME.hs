@@ -266,11 +266,11 @@ replaceOrderInQueue ooid o (h:t)
 
 
 findOrderFromQueueByID :: OrderID -> OrderQueue -> Maybe Order
-findOrderFromQueueByID oidToRemove oq
+findOrderFromQueueByID oidToFind oq
     | null filtered = Nothing
     | otherwise     = Just $ head filtered
   where
-    filtered = List.filter (\o -> oid o == oidToRemove) oq
+    filtered = List.filter (\o -> oid o == oidToFind) oq
 
 
 applyOnQueue :: (OrderQueue -> OrderQueue) -> Side -> OrderBook -> OrderBook
