@@ -26,21 +26,23 @@ newOrderMatcher (NewOrderRq o) s = do
 
 orderCanceller :: Handler
 orderCanceller (CancelOrderRq _ oid side) s = do
-    (ob, o) <- cancelOrder oid side (orderBook s)
+    let ob = orderBook s
+    (ob', o) <- cancelOrder oid side ob
     let status = if isNothing o then Rejected else Accepted
-    return (CancelOrderRs status o, s { orderBook = ob})
+    return (CancelOrderRs status o, s { orderBook = ob'})
 
 
 orderReplacer :: Handler
 orderReplacer (ReplaceOrderRq oldoid oNotAdjusted) s = do
-    (ob, oldo) <- cancelOrder oldoid (side oNotAdjusted) (orderBook s)
+    let ob = orderBook s
+    (ob', oldo) <- cancelOrder oldoid (side oNotAdjusted) ob
     if isNothing oldo
         then return (ReplaceOrderRs Rejected Nothing [], s)
         else do
             let oldOrder = fromJust oldo
             let o = adjustPeakSizeOnReplace oldOrder oNotAdjusted
-            (ob', ts) <- if shouldReplaceInPlace oldOrder o then replaceOrderInPlace (oid oldOrder) o ob else matchNewOrder o ob
-            return (ReplaceOrderRs Accepted oldo ts, s { orderBook = ob'})
+            (ob'', ts) <- if shouldReplaceInPlace oldOrder o then replaceOrderInPlace (oid oldOrder) o ob else matchNewOrder o ob'
+            return (ReplaceOrderRs Accepted oldo ts, s { orderBook = ob''})
 
 
 newOrderHandler :: Handler
