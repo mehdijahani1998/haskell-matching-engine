@@ -101,15 +101,15 @@ fInput rqs = foldl (++) (printf "%d\n" $ length rqs) $ map fRequest rqs
 
 
 fOutput :: [Response] -> String
-fOutput rss = foldl (++) "" $ map fResponse rss
+fOutput = concatMap fResponse
 
 
 fTestCase :: TestCase -> String
-fTestCase (TestCase inp out _) = (fInput inp) ++ (fOutput out) ++ "\n"
+fTestCase (TestCase inp out _) = fInput inp ++ fOutput out ++ "\n"
 
 
 fTestSuite :: [TestCase] -> String
-fTestSuite ts = foldl (\acc tc -> acc ++ (fTestCase tc) ++ "\n") (printf "%d\n" $ length ts) ts
+fTestSuite ts = foldl (\acc tc -> acc ++ fTestCase tc ++ "\n") (printf "%d\n" $ length ts) ts
 
 
 coverageSetTC :: [CoverageInfo] -> Set.Set CoverageItem
@@ -129,4 +129,4 @@ coverageScoreTC = coverageScore . concat . coverage
 
 
 avgCoverageScoreTS :: [TestCase] -> Double
-avgCoverageScoreTS ts = (fromIntegral $ sum $ map coverageScoreTC ts) / (fromIntegral $ length ts)
+avgCoverageScoreTS ts = fromIntegral (sum $ map coverageScoreTC ts) / fromIntegral (length ts)
