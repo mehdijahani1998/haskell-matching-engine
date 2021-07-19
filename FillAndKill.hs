@@ -18,8 +18,8 @@ fillAndKillProc =
 fillAndKillProcByType :: PartialDecorator
 fillAndKillProcByType  (NewOrderRq o) _ rs s' =
     if fillAndKill o
-        then (rs, removeOrderFromState o s') `covers` "FKP1"
-        else (rs, s') `covers` "FKP2"
+        then rs { state = removeOrderFromState o s' } `covers` "FKP1"
+        else rs { state = s' } `covers` "FKP2"
 
 fillAndKillProcByType _ _ rs s' =
-    (rs, s') `covers` "FKP-P"
+    rs { state = s' } `covers` "FKP-P"

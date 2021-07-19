@@ -133,47 +133,53 @@ accepted Rejected = False
 data Response = NewOrderRs
     { status :: ResponseStatus
     , trades :: [Trade]
+    , state :: MEState
     } | CancelOrderRs
     { status   :: ResponseStatus
     , oldOrder :: Maybe Order
+    , state :: MEState
     } | ReplaceOrderRs
     { status   :: ResponseStatus
     , oldOrder :: Maybe Order
     , trades   :: [Trade]
+    , state :: MEState
     } | SetCreditRs
     { status :: ResponseStatus
+    , state :: MEState
     } | SetOwnershipRs
     { status :: ResponseStatus
+    , state :: MEState
     } | SetReferencePriceRs
     { status :: ResponseStatus
+    , state :: MEState
     } deriving (Show, Eq)
 
 
-rejectedNewOrderRs :: Response
+rejectedNewOrderRs :: MEState -> Response
 rejectedNewOrderRs = NewOrderRs Rejected []
 
 
-rejectedReplaceOrderRs :: Response
+rejectedReplaceOrderRs :: MEState -> Response
 rejectedReplaceOrderRs = ReplaceOrderRs Rejected Nothing []
 
 
-rejectedCancelOrderRs :: Response
+rejectedCancelOrderRs :: MEState -> Response
 rejectedCancelOrderRs = CancelOrderRs Rejected Nothing
 
 
-rejectedSetCreditRs :: Response
+rejectedSetCreditRs :: MEState -> Response
 rejectedSetCreditRs = SetCreditRs Rejected
 
 
-rejectedSetOwnershipRs :: Response
+rejectedSetOwnershipRs :: MEState -> Response
 rejectedSetOwnershipRs = SetOwnershipRs Rejected
 
 
-rejectedSetReferencePriceRs :: Response
+rejectedSetReferencePriceRs :: MEState -> Response
 rejectedSetReferencePriceRs = SetReferencePriceRs Rejected
 
 
-reject :: Request -> Response
+reject :: Request -> MEState -> Response
 reject NewOrderRq {} = rejectedNewOrderRs
 
 reject ReplaceOrderRq {} = rejectedReplaceOrderRs

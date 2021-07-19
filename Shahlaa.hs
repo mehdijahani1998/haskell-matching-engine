@@ -26,7 +26,8 @@ handleRequest :: TestState -> Request -> TestState
 handleRequest (s, rss, covs) rq =
     (s', rss ++ [rs], covs ++ [cov])
   where
-    ((rs, s'), cov) = runState (requestHandler rq s) emptyCoverage
+    (rs, cov) = runState (requestHandler rq s) emptyCoverage
+    s' = ME.state rs
 
 
 addOracle :: [Request] -> TestCase
@@ -81,17 +82,17 @@ fRequest (SetReferencePriceRq rp) =
 
 
 fResponse :: Response -> String
-fResponse (NewOrderRs s ts) =
+fResponse (NewOrderRs s ts _) =
     printf "NewOrderRs\t%s\n%s" (show s) (fTrades ts)
-fResponse (CancelOrderRs s _) =
+fResponse (CancelOrderRs s _ _) =
     printf "CancelOrderRs\t%s\n" (show s)
-fResponse (ReplaceOrderRs s _ ts) =
+fResponse (ReplaceOrderRs s _ ts _) =
     printf "ReplaceOrderRs\t%s\n%s" (show s) (fTrades ts)
-fResponse (SetCreditRs s) =
+fResponse (SetCreditRs s _) =
     printf "SetCreditRs\t%s\n" (show s)
-fResponse (SetOwnershipRs s) =
+fResponse (SetOwnershipRs s _) =
     printf "SetOwnershipRs\t%s\n" (show s)
-fResponse (SetReferencePriceRs s) =
+fResponse (SetReferencePriceRs s _) =
     printf "SetReferencePriceRs\t%s\n" (show s)
 
 

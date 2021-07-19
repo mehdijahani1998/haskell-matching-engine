@@ -68,12 +68,12 @@ creditLimitProcByType rq@ReplaceOrderRq {} s rs s' =
     creditLimitProcForArrivingOrder rq s rs s'
 
 creditLimitProcByType _ _ rs s' =
-    (rs, s') `covers` "CLP-P"
+    rs { state = s' } `covers` "CLP-P"
 
 
 creditLimitProcForArrivingOrder :: PartialDecorator
 creditLimitProcForArrivingOrder rq s rs s' = do
     let o = order rq
     if creditLimitCheck o s (trades rs) s'
-        then (rs, updateCreditInfo o (trades rs) s') `covers` "CLP1"
-        else (reject rq, s) `covers` "CLP2"
+        then rs { state = updateCreditInfo o (trades rs) s'} `covers` "CLP1"
+        else reject rq s `covers` "CLP2"

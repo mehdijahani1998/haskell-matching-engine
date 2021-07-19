@@ -19,7 +19,7 @@ ownershipCheckByType maxOwnership rq@ReplaceOrderRq {} s rs s' =
     ownershipCheckForArrivingOrder maxOwnership rq s rs s'
 
 ownershipCheckByType _ _ _ rs s' =
-    (rs, s') `covers` "OSC-P"
+    rs { state = s' } `covers` "OSC-P"
 
 
 getOldOrder :: Response -> Maybe Order
@@ -38,8 +38,8 @@ ownershipCheckForArrivingOrder maxOwnership rq s rs s' = do
     let o = order rq
     let oldo = getOldOrder rs
     if ownershipPreCheck maxOwnership o oldo s
-        then (rs, updateOwnershipInfo (trades rs) s') `covers` "OSC1"
-        else (reject rq, s) `covers` "OSC2"
+        then rs { state = updateOwnershipInfo (trades rs) s' } `covers` "OSC1"
+        else reject rq s `covers` "OSC2"
 
 
 updateOwnershipInfo :: [Trade] -> MEState -> MEState
