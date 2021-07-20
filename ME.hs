@@ -122,12 +122,7 @@ data Request = NewOrderRq
     } deriving (Show, Eq)
 
 
-data ResponseStatus = Accepted | Rejected deriving (Show, Eq)
-
-accepted :: ResponseStatus -> Bool
-accepted Accepted = True
-
-accepted Rejected = False
+data ResponseStatus = Accepted | Eliminated | Rejected deriving (Show, Eq)
 
 
 data Response = NewOrderRs

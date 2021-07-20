@@ -16,7 +16,7 @@ pricebandCheckByType rq@(NewOrderRq o) s rs s' =
         Nothing -> rs { state = s' } `covers` "MQC1"
         Just mq -> if sum (Prelude.map quantityTraded $ trades rs) >= mq
             then rs { state = s' } `covers` "MQC2"
-            else reject rq s `covers` "MQC3"
+            else (reject rq s) { status = Eliminated } `covers` "MQC3"
 
 pricebandCheckByType _ _ rs s' =
     rs { state = s' } `covers`  "MQC-P"

@@ -18,8 +18,12 @@ fillAndKillProc =
 fillAndKillProcByType :: PartialDecorator
 fillAndKillProcByType  (NewOrderRq o) _ rs s' =
     if fillAndKill o
-        then rs { state = removeOrderFromState o s' } `covers` "FKP1"
+        then rs { state = removeOrderFromState o s', status = accepted_status } `covers` "FKP1"
         else rs { state = s' } `covers` "FKP2"
+  where
+    accepted_status = if sum (Prelude.map quantityTraded $ trades rs) > 0
+        then status rs
+        else Eliminated
 
 fillAndKillProcByType _ _ rs s' =
     rs { state = s' } `covers` "FKP-P"

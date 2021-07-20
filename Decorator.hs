@@ -19,4 +19,5 @@ decorateOnAccept stmt decorateByType handler rq s = do
     let s' = state rs
     case status rs of
         Accepted -> decorateByType rq s rs s'
+        Eliminated -> decorateByType rq s rs s'
         Rejected -> rs `covers`  (stmt ++ "-AR")
