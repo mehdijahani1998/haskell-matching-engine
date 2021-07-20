@@ -148,7 +148,7 @@ ReplaceOrderRs	Accepted
 	Credits	7
 	Credit	1	98
 	Credit	2	145
-	Credit	3	65
+	Credit	3	47
 	Credit	4	213
 	Credit	5	73
 	Credit	6	100
@@ -170,7 +170,7 @@ NewOrderRs	Accepted
 	Credits	7
 	Credit	1	98
 	Credit	2	145
-	Credit	3	65
+	Credit	3	38
 	Credit	4	213
 	Credit	5	73
 	Credit	6	109
@@ -196,7 +196,7 @@ NewOrderRs	Accepted
 	Credits	7
 	Credit	1	98
 	Credit	2	145
-	Credit	3	65
+	Credit	3	38
 	Credit	4	213
 	Credit	5	73
 	Credit	6	163
