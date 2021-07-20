@@ -2,6 +2,7 @@ module Shahlaa where
 
 import           Control.Monad.Trans.State
 import           Coverage
+import qualified Data.Map                  as Map
 import qualified Data.Set                  as Set
 import           ME
 import           MEService
@@ -82,18 +83,43 @@ fRequest (SetReferencePriceRq rp) =
 
 
 fResponse :: Response -> String
-fResponse (NewOrderRs s ts _) =
-    printf "NewOrderRs\t%s\n%s" (show s) (fTrades ts)
-fResponse (CancelOrderRs s _ _) =
-    printf "CancelOrderRs\t%s\n" (show s)
-fResponse (ReplaceOrderRs s _ ts _) =
-    printf "ReplaceOrderRs\t%s\n%s" (show s) (fTrades ts)
+fResponse (NewOrderRs s ts statesnapshot) =
+    printf "NewOrderRs\t%s\n%s%s" (show s) (fTrades ts) (fState statesnapshot)
+fResponse (CancelOrderRs s _ statesnapshot) =
+    printf "CancelOrderRs\t%s\n%s" (show s) (fState statesnapshot)
+fResponse (ReplaceOrderRs s _ ts statesnapshot) =
+    printf "ReplaceOrderRs\t%s\n%s%s" (show s) (fTrades ts) (fState statesnapshot)
 fResponse (SetCreditRs s _) =
     printf "SetCreditRs\t%s\n" (show s)
 fResponse (SetOwnershipRs s _) =
     printf "SetOwnershipRs\t%s\n" (show s)
 fResponse (SetReferencePriceRs s _) =
     printf "SetReferencePriceRs\t%s\n" (show s)
+
+
+fMap :: Show a => Show b => String -> Map.Map a b -> String
+fMap prefix m = concatMap (\(i, j) -> printf "\t%s\t%s\t%s\n" prefix (show i) (show j)) $ Map.toList m
+
+
+fOrderBook :: OrderBook -> String
+fOrderBook (OrderBook bq sq) = foldl (++) (printf "\tOrders\t%d\n" $ length bq + length sq) $ map (printf "\tOrder\t%s\n" . fOrder) $ bq ++ sq
+
+
+fCreditInfo :: CreditInfo -> String
+fCreditInfo cs = printf "\tCredits\t%d\n%s" (length cs) (fMap "Credit" cs)
+
+
+fOwnershipInfo :: OwnershipInfo -> String
+fOwnershipInfo os = printf "\tOwnerships\t%d\n%s" (length os) (fMap "Ownership" os)
+
+
+fReferencePrice :: Price -> String
+fReferencePrice = printf "\tReferencePrice\t%d\n"
+
+
+fState :: MEState -> String
+fState (MEState orderBook creditInfo ownershipInfo referencePrice) =
+    printf "%s%s%s%s" (fOrderBook orderBook) (fCreditInfo creditInfo) (fOwnershipInfo ownershipInfo) (fReferencePrice referencePrice)
 
 
 fInput :: [Request] -> String
