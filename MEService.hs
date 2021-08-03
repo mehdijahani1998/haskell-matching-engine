@@ -1,5 +1,6 @@
 module MEService (requestHandler) where
 
+import           Coverage
 import           CreditLimit
 import           Data.Map
 import           Data.Maybe
@@ -45,6 +46,44 @@ orderReplacer (ReplaceOrderRq oldoid oNotAdjusted) s = do
             return (ReplaceOrderRs Accepted oldo ts s { orderBook = ob''})
 
 
+handlerSeed :: Handler
+handlerSeed NewOrderRq {} s = NewOrderRs Accepted [] s `covers` "NO"
+
+handlerSeed ReplaceOrderRq {} s = ReplaceOrderRs Accepted Nothing [] s `covers` "RO"
+
+handlerSeed CancelOrderRq {} s = CancelOrderRs Accepted Nothing s `covers` "CO"
+
+
+newOrderDecorator :: Decorator
+newOrderDecorator =
+    decorateOnAccept "NO" newOrderDecoratorOnAccept
+
+
+newOrderDecoratorOnAccept :: PartialDecorator
+newOrderDecoratorOnAccept rq@NewOrderRq{} s _ _ = do
+    newOrderMatcher rq s
+
+
+replaceOrderDecorator :: Decorator
+replaceOrderDecorator =
+    decorateOnAccept "RO" replaceOrderDecoratorOnAccept
+
+
+replaceOrderDecoratorOnAccept :: PartialDecorator
+replaceOrderDecoratorOnAccept rq@ReplaceOrderRq {} s _ _ = do
+    orderReplacer rq s
+
+
+cancelOrderDecorator :: Decorator
+cancelOrderDecorator =
+    decorateOnAccept "CO" cancelOrderDecoratorOnAccept
+
+
+cancelOrderDecoratorOnAccept :: PartialDecorator
+cancelOrderDecoratorOnAccept rq@CancelOrderRq {} s _ _ = do
+    orderCanceller rq s
+
+
 newOrderHandler :: Handler
 newOrderHandler =
     fillAndKillProc $
@@ -52,7 +91,8 @@ newOrderHandler =
     creditLimitProc $
     ownershipCheck ownershipUpperLimit $
     pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
-    newOrderMatcher
+    newOrderDecorator $
+    handlerSeed
 
 
 cancelOrderHandler :: Handler
@@ -60,7 +100,8 @@ cancelOrderHandler =
     creditLimitProc $
     ownershipCheck ownershipUpperLimit $
     pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
-    orderCanceller
+    cancelOrderDecorator $
+    handlerSeed
 
 
 replaceOrderHandler :: Handler
@@ -68,7 +109,8 @@ replaceOrderHandler =
     creditLimitProc $
     ownershipCheck ownershipUpperLimit $
     pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
-    orderReplacer
+    replaceOrderDecorator $
+    handlerSeed
 
 
 requestHandler :: Handler
