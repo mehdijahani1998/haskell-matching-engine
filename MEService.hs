@@ -60,7 +60,7 @@ newOrderDecorator =
 
 
 newOrderDecoratorOnAccept :: PartialDecorator
-newOrderDecoratorOnAccept rq@NewOrderRq{} s _ _ = do
+newOrderDecoratorOnAccept rq@NewOrderRq{} s _ = do
     newOrderMatcher rq s
 
 
@@ -70,7 +70,7 @@ replaceOrderDecorator =
 
 
 replaceOrderDecoratorOnAccept :: PartialDecorator
-replaceOrderDecoratorOnAccept rq@ReplaceOrderRq {} s _ _ = do
+replaceOrderDecoratorOnAccept rq@ReplaceOrderRq {} s _ = do
     orderReplacer rq s
 
 
@@ -80,7 +80,7 @@ cancelOrderDecorator =
 
 
 cancelOrderDecoratorOnAccept :: PartialDecorator
-cancelOrderDecoratorOnAccept rq@CancelOrderRq {} s _ _ = do
+cancelOrderDecoratorOnAccept rq@CancelOrderRq {} s _ = do
     orderCanceller rq s
 
 

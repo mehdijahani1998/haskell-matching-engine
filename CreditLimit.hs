@@ -66,19 +66,20 @@ creditLimitProc =
 
 
 creditLimitProcByType :: PartialDecorator
-creditLimitProcByType rq@NewOrderRq {} s rs s' =
-    creditLimitProcForArrivingOrder rq s rs s'
+creditLimitProcByType rq@NewOrderRq {} s rs =
+    creditLimitProcForArrivingOrder rq s rs
 
-creditLimitProcByType rq@ReplaceOrderRq {} s rs s' =
-    creditLimitProcForArrivingOrder rq s rs s'
+creditLimitProcByType rq@ReplaceOrderRq {} s rs =
+    creditLimitProcForArrivingOrder rq s rs
 
-creditLimitProcByType _ _ rs s' =
-    rs { state = s' } `covers` "CLP-P"
+creditLimitProcByType _ _ rs =
+    rs `covers` "CLP-P"
 
 
 creditLimitProcForArrivingOrder :: PartialDecorator
-creditLimitProcForArrivingOrder rq s rs s' = do
+creditLimitProcForArrivingOrder rq s rs = do
     let o = order rq
+    let s' = state rs
     if creditLimitCheck o s (trades rs) s'
         then rs { state = updateCreditInfo (trades rs) s'} `covers` "CLP1"
         else reject rq s `covers` "CLP2"

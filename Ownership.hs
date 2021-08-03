@@ -12,14 +12,14 @@ ownershipCheck maxOwnership =
 
 
 ownershipCheckByType :: Int -> PartialDecorator
-ownershipCheckByType maxOwnership rq@NewOrderRq {} s rs s' =
-    ownershipCheckForArrivingOrder maxOwnership rq s rs s'
+ownershipCheckByType maxOwnership rq@NewOrderRq {} s rs =
+    ownershipCheckForArrivingOrder maxOwnership rq s rs
 
-ownershipCheckByType maxOwnership rq@ReplaceOrderRq {} s rs s' =
-    ownershipCheckForArrivingOrder maxOwnership rq s rs s'
+ownershipCheckByType maxOwnership rq@ReplaceOrderRq {} s rs =
+    ownershipCheckForArrivingOrder maxOwnership rq s rs
 
-ownershipCheckByType _ _ _ rs s' =
-    rs { state = s' } `covers` "OSC-P"
+ownershipCheckByType _ _ _ rs =
+    rs `covers` "OSC-P"
 
 
 getOldOrder :: Response -> Maybe Order
@@ -34,9 +34,10 @@ getOldOrder _ =
 
 
 ownershipCheckForArrivingOrder :: Int -> PartialDecorator
-ownershipCheckForArrivingOrder maxOwnership rq s rs s' = do
+ownershipCheckForArrivingOrder maxOwnership rq s rs = do
     let o = order rq
     let oldo = getOldOrder rs
+    let s' = state rs
     if ownershipPreCheck maxOwnership o oldo s
         then rs { state = updateOwnershipInfo (trades rs) s' } `covers` "OSC1"
         else reject rq s `covers` "OSC2"

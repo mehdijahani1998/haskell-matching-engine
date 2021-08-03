@@ -10,14 +10,13 @@ import           ME
 
 type Handler = Request -> MEState -> Coverage Response
 type Decorator = Handler -> Handler
-type PartialDecorator = Request -> MEState -> Response -> MEState -> Coverage Response
+type PartialDecorator = Request -> MEState -> Response -> Coverage Response
 
 
 decorateOnAccept :: String -> PartialDecorator -> Decorator
 decorateOnAccept stmt decorateByType handler rq s = do
     rs <- handler rq s
-    let s' = state rs
     case status rs of
-        Accepted -> decorateByType rq s rs s'
-        Eliminated -> decorateByType rq s rs s'
+        Accepted -> decorateByType rq s rs
+        Eliminated -> decorateByType rq s rs
         Rejected -> rs `covers`  (stmt ++ "-AR")
