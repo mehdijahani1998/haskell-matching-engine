@@ -10,6 +10,7 @@ import           ME
 import           MinQuantity
 import           Ownership
 import           PriceBand
+import           Validation
 
 ownershipUpperLimit :: Int
 ownershipUpperLimit = 20
@@ -78,6 +79,7 @@ newOrderHandler =
     ownershipCheck ownershipUpperLimit $
     pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
     arrivingOrderDecorator $
+    validateOrder
     handlerSeed
 
 
@@ -87,6 +89,7 @@ cancelOrderHandler =
     ownershipCheck ownershipUpperLimit $
     pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
     arrivingOrderDecorator $
+    validateOrder
     handlerSeed
 
 
@@ -96,6 +99,7 @@ replaceOrderHandler =
     ownershipCheck ownershipUpperLimit $
     pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
     arrivingOrderDecorator $
+    validateOrder
     handlerSeed
 
 
