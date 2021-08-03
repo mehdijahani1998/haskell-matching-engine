@@ -21,14 +21,24 @@ totalWorthInQueue side shi ob =
     queueBySide side ob
 
 
-creditLimitCheck :: Order -> MEState -> [Trade] -> MEState -> Bool
-creditLimitCheck order beforeTradeState ts afterTradeState
-    | side order == Buy  = creditInfo beforeTradeState Map.! buyerId >= creditSpentByBuyer buyerId ts + totalWorthInQueue Buy shi afterTrade
-    | side order == Sell = True
+creditLimitCheckForArrivingOrder :: Order -> MEState -> [Trade] -> MEState -> Bool
+creditLimitCheckForArrivingOrder o beforeTradeState ts afterTradeState = do
+    bri `Map.member` credits && case side o of
+        Buy  -> creditInfo beforeTradeState Map.! bri >= creditSpentByBuyer bri ts + totalWorthInQueue Buy shi afterTrade
+        Sell -> True
   where
-    buyerId = brid order
+    credits = creditInfo beforeTradeState
+    bri = brid o
     afterTrade = orderBook afterTradeState
-    shi = shid order
+    shi = shid o
+
+
+creditLimitCheckOnCancel :: Order -> MEState -> MEState -> Bool
+creditLimitCheckOnCancel o beforeTradeState _ =
+    bri `Map.member` credits
+  where
+    credits = creditInfo beforeTradeState
+    bri = brid o
 
 
 updateCreditInfo :: [Trade] -> MEState -> MEState
@@ -72,6 +82,9 @@ creditLimitProcByType rq@NewOrderRq {} s rs =
 creditLimitProcByType rq@ReplaceOrderRq {} s rs =
     creditLimitProcForArrivingOrder rq s rs
 
+creditLimitProcByType rq@CancelOrderRq {} s rs =
+    creditLimitProcForCancelOrder rq s rs
+
 creditLimitProcByType _ _ rs =
     rs `covers` "CLP-P"
 
@@ -80,6 +93,15 @@ creditLimitProcForArrivingOrder :: PartialDecorator
 creditLimitProcForArrivingOrder rq s rs = do
     let o = order rq
     let s' = state rs
-    if creditLimitCheck o s (trades rs) s'
+    if creditLimitCheckForArrivingOrder o s (trades rs) s'
         then rs { state = updateCreditInfo (trades rs) s'} `covers` "CLP1"
         else reject rq s `covers` "CLP2"
+
+
+creditLimitProcForCancelOrder :: PartialDecorator
+creditLimitProcForCancelOrder rq s rs = do
+    let o = order rq
+    let s' = state rs
+    if creditLimitCheckOnCancel o s s'
+        then rs `covers` "CLP3"
+        else reject rq s `covers` "CLP4"
