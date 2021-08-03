@@ -54,33 +54,19 @@ handlerSeed ReplaceOrderRq {} s = ReplaceOrderRs Accepted Nothing [] s `covers` 
 handlerSeed CancelOrderRq {} s = CancelOrderRs Accepted Nothing s `covers` "CO"
 
 
-newOrderDecorator :: Decorator
-newOrderDecorator =
-    decorateOnAccept "NO" newOrderDecoratorOnAccept
+arrivingOrderDecorator :: Decorator
+arrivingOrderDecorator =
+    decorateOnAccept "ARR" arrivingOrderDecoratorOnAccept
 
 
-newOrderDecoratorOnAccept :: PartialDecorator
-newOrderDecoratorOnAccept rq@NewOrderRq{} s _ = do
+arrivingOrderDecoratorOnAccept :: PartialDecorator
+arrivingOrderDecoratorOnAccept rq@NewOrderRq{} s _ = do
     newOrderMatcher rq s
 
-
-replaceOrderDecorator :: Decorator
-replaceOrderDecorator =
-    decorateOnAccept "RO" replaceOrderDecoratorOnAccept
-
-
-replaceOrderDecoratorOnAccept :: PartialDecorator
-replaceOrderDecoratorOnAccept rq@ReplaceOrderRq {} s _ = do
+arrivingOrderDecoratorOnAccept rq@ReplaceOrderRq {} s _ = do
     orderReplacer rq s
 
-
-cancelOrderDecorator :: Decorator
-cancelOrderDecorator =
-    decorateOnAccept "CO" cancelOrderDecoratorOnAccept
-
-
-cancelOrderDecoratorOnAccept :: PartialDecorator
-cancelOrderDecoratorOnAccept rq@CancelOrderRq {} s _ = do
+arrivingOrderDecoratorOnAccept rq@CancelOrderRq {} s _ = do
     orderCanceller rq s
 
 
@@ -91,7 +77,7 @@ newOrderHandler =
     creditLimitProc $
     ownershipCheck ownershipUpperLimit $
     pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
-    newOrderDecorator $
+    arrivingOrderDecorator $
     handlerSeed
 
 
@@ -100,7 +86,7 @@ cancelOrderHandler =
     creditLimitProc $
     ownershipCheck ownershipUpperLimit $
     pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
-    cancelOrderDecorator $
+    arrivingOrderDecorator $
     handlerSeed
 
 
@@ -109,7 +95,7 @@ replaceOrderHandler =
     creditLimitProc $
     ownershipCheck ownershipUpperLimit $
     pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
-    replaceOrderDecorator $
+    arrivingOrderDecorator $
     handlerSeed
 
 
