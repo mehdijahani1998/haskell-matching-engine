@@ -47,16 +47,16 @@ orderReplacer (ReplaceOrderRq oldoid oNotAdjusted) s = do
 
 
 handlerSeed :: Handler
-handlerSeed NewOrderRq {} s = NewOrderRs Accepted [] s `covers` "NO"
+handlerSeed NewOrderRq {} s = NewOrderRs Accepted [] s `covers` "NO-RCV"
 
-handlerSeed ReplaceOrderRq {} s = ReplaceOrderRs Accepted Nothing [] s `covers` "RO"
+handlerSeed ReplaceOrderRq {} s = ReplaceOrderRs Accepted Nothing [] s `covers` "RO-RCV"
 
-handlerSeed CancelOrderRq {} s = CancelOrderRs Accepted Nothing s `covers` "CO"
+handlerSeed CancelOrderRq {} s = CancelOrderRs Accepted Nothing s `covers` "CO-RCV"
 
 
 arrivingOrderDecorator :: Decorator
 arrivingOrderDecorator =
-    decorateOnAccept "ARR" arrivingOrderDecoratorOnAccept
+    decorateOnAccept "PRC-" arrivingOrderDecoratorOnAccept
 
 
 arrivingOrderDecoratorOnAccept :: PartialDecorator
