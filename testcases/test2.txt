@@ -1,0 +1,20 @@
+15
+3
+SetReferencePrice	10
+SetCreditRq	1	98
+SetCreditRq	2	145
+SetCreditRq	3	65
+SetCreditRq	4	195
+SetCreditRq	5	73
+SetCreditRq	6	100
+SetCreditRq	7	100
+SetOwnershipRq	1	16
+SetOwnershipRq	2	19
+SetOwnershipRq	3	9
+SetOwnershipRq	4	7
+SetOwnershipRq	5	16
+SetOwnershipRq	6	19
+SetOwnershipRq	7	0
+NewOrderRq	2	10	10	1	False	0	False	0
+NewOrderRq	30	4	10	1	False	0	False	0
+NewOrderRq	2	4	10	1	False	0	False	0
