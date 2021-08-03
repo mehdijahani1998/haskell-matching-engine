@@ -18,9 +18,6 @@ ownershipCheckByType maxOwnership rq@NewOrderRq {} s rs =
 ownershipCheckByType maxOwnership rq@ReplaceOrderRq {} s rs =
     ownershipCheckForArrivingOrder maxOwnership rq s rs
 
-ownershipCheckByType _ rq@CancelOrderRq {} s rs =
-    ownershipCheckForCancelOrder rq s rs
-
 ownershipCheckByType _ _ _ rs =
     rs `covers` "OSC-P"
 
@@ -44,14 +41,6 @@ ownershipCheckForArrivingOrder maxOwnership rq s rs = do
     if ownershipPreCheck maxOwnership o oldo s
         then rs { state = updateOwnershipInfo (trades rs) s' } `covers` "OSC1"
         else reject rq s `covers` "OSC2"
-
-
-ownershipCheckForCancelOrder :: PartialDecorator
-ownershipCheckForCancelOrder rq s rs = do
-    let o = order rq
-    if ownershipPreCheckOnCancel o s
-        then rs `covers` "OSC3"
-        else reject rq s `covers` "OSC4"
 
 
 updateOwnershipInfo :: [Trade] -> MEState -> MEState
@@ -81,13 +70,6 @@ quantityInQueue o q =
     Prelude.map quantity $
     Prelude.filter (\orderInQueue -> oid orderInQueue == oid o) $
     q
-
-
-ownershipPreCheckOnCancel :: Order -> MEState -> Bool
-ownershipPreCheckOnCancel o (MEState _ _ ownership _) =
-    shi `member` ownership
-  where
-    shi = shid o
 
 
 ownershipPreCheck :: Int -> Order -> Maybe Order -> MEState -> Bool

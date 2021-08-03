@@ -33,14 +33,6 @@ creditLimitCheckForArrivingOrder o beforeTradeState ts afterTradeState = do
     shi = shid o
 
 
-creditLimitCheckOnCancel :: Order -> MEState -> MEState -> Bool
-creditLimitCheckOnCancel o beforeTradeState _ =
-    bri `Map.member` credits
-  where
-    credits = creditInfo beforeTradeState
-    bri = brid o
-
-
 updateCreditInfo :: [Trade] -> MEState -> MEState
 updateCreditInfo ts s =
     foldl updateCreditByTrade s ts
@@ -82,9 +74,6 @@ creditLimitProcByType rq@NewOrderRq {} s rs =
 creditLimitProcByType rq@ReplaceOrderRq {} s rs =
     creditLimitProcForArrivingOrder rq s rs
 
-creditLimitProcByType rq@CancelOrderRq {} s rs =
-    creditLimitProcForCancelOrder rq s rs
-
 creditLimitProcByType _ _ rs =
     rs `covers` "CLP-P"
 
@@ -96,12 +85,3 @@ creditLimitProcForArrivingOrder rq s rs = do
     if creditLimitCheckForArrivingOrder o s (trades rs) s'
         then rs { state = updateCreditInfo (trades rs) s'} `covers` "CLP1"
         else reject rq s `covers` "CLP2"
-
-
-creditLimitProcForCancelOrder :: PartialDecorator
-creditLimitProcForCancelOrder rq s rs = do
-    let o = order rq
-    let s' = state rs
-    if creditLimitCheckOnCancel o s s'
-        then rs `covers` "CLP3"
-        else reject rq s `covers` "CLP4"
