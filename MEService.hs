@@ -12,8 +12,8 @@ import           Ownership
 import           PriceBand
 import           Validation
 
-ownershipUpperLimit :: Int
-ownershipUpperLimit = 20
+ownershipUpperLimit :: Float
+ownershipUpperLimit = 0.2
 staticPriceBandUpperLimit :: Float
 staticPriceBandUpperLimit = 0.9
 staticPriceBandLowerLimit :: Float

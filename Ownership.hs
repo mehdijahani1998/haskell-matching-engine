@@ -6,17 +6,17 @@ import           Decorator
 import           ME
 
 
-ownershipCheck :: Int -> Decorator
-ownershipCheck maxOwnership =
-    decorateOnAccept "OSC" $ ownershipCheckByType maxOwnership
+ownershipCheck :: Float -> Decorator
+ownershipCheck maxOwnershipPortion =
+    decorateOnAccept "OSC" $ ownershipCheckByType maxOwnershipPortion
 
 
-ownershipCheckByType :: Int -> PartialDecorator
-ownershipCheckByType maxOwnership rq@NewOrderRq {} s rs =
-    ownershipCheckForArrivingOrder maxOwnership rq s rs
+ownershipCheckByType :: Float -> PartialDecorator
+ownershipCheckByType maxOwnershipPortion rq@NewOrderRq {} s rs =
+    ownershipCheckForArrivingOrder maxOwnershipPortion rq s rs
 
-ownershipCheckByType maxOwnership rq@ReplaceOrderRq {} s rs =
-    ownershipCheckForArrivingOrder maxOwnership rq s rs
+ownershipCheckByType maxOwnershipPortion rq@ReplaceOrderRq {} s rs =
+    ownershipCheckForArrivingOrder maxOwnershipPortion rq s rs
 
 ownershipCheckByType _ _ _ rs =
     rs `covers` "OSC-P"
@@ -33,12 +33,12 @@ getOldOrder _ =
     Nothing
 
 
-ownershipCheckForArrivingOrder :: Int -> PartialDecorator
-ownershipCheckForArrivingOrder maxOwnership rq s rs = do
+ownershipCheckForArrivingOrder :: Float -> PartialDecorator
+ownershipCheckForArrivingOrder maxOwnershipPortion rq s rs = do
     let o = order rq
     let oldo = getOldOrder rs
     let s' = state rs
-    if ownershipPreCheck maxOwnership o oldo s
+    if ownershipPreCheck maxOwnershipPortion o oldo s
         then rs { state = updateOwnershipInfo (trades rs) s' } `covers` "OSC1"
         else reject rq s `covers` "OSC2"
 
@@ -74,8 +74,8 @@ quantityInQueue o q =
     q
 
 
-ownershipPreCheck :: Int -> Order -> Maybe Order -> MEState -> Bool
-ownershipPreCheck maxOwnership o oldOrder state = do
+ownershipPreCheck :: Float -> Order -> Maybe Order -> MEState -> Bool
+ownershipPreCheck maxOwnershipPortion o oldOrder state = do
     shi `member` ownership && case side o of
         Buy  -> (ownership!shi) + (quantity o) + (totalQuantity Buy shi ob) - (quantityInBook oldOrder ob) < maxOwnership
         Sell -> (quantity o) + (totalQuantity Sell shi ob) - (quantityInBook oldOrder ob) <= (ownership!shi)
@@ -83,6 +83,8 @@ ownershipPreCheck maxOwnership o oldOrder state = do
     shi = shid o
     ownership = ownershipInfo state
     ob = orderBook state
+    shares = totalShares state
+    maxOwnership = floor $ fromIntegral shares * maxOwnershipPortion
 
 
 totalQuantity :: Side -> ShareholderID -> OrderBook -> Quantity
