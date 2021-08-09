@@ -25,12 +25,13 @@ validatePriceDecorator _ _ rs =
 
 validatePrice :: PartialDecorator
 validatePrice rq s rs =
-    if p `rem` 1 == 0
+    if p `rem` tick == 0
         then rs `covers` "VAL-PR-1"
         else reject rq s `covers` "VAL-PR-2"
   where
     o = order rq
     p = price o
+    tick = tickSize s
 
 
 validateQtyDecorator :: PartialDecorator
@@ -46,9 +47,10 @@ validateQtyDecorator _ _ rs =
 
 validateQty :: PartialDecorator
 validateQty rq s rs =
-    if q `rem` 1 == 0
+    if q `rem` lot == 0
         then rs `covers` "VAL-QTY-1"
         else reject rq s `covers` "VAL-QTY-2"
   where
     o = order rq
     q = quantity o
+    lot = lotSize s

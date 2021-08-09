@@ -126,3 +126,9 @@ requestHandler (SetStaticPriceBandUpperLimitRq pb) s = do
 
 requestHandler (SetOwnershipUpperLimitRq ol) s = do
     return (SetOwnershipUpperLimitRs Accepted s { ownershipUpperLimit = ol })
+
+requestHandler (SetTickSizeRq t) s = do
+    return (SetTickSizeRs Accepted s { tickSize = t })
+
+requestHandler (SetLotSizeRq l) s = do
+    return (SetLotSizeRs Accepted s { lotSize = l })

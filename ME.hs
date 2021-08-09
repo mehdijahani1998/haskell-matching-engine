@@ -99,11 +99,13 @@ data MEState = MEState
     , staticPriceBandUpperLimit :: Float
     , totalShares               :: Quantity
     , ownershipUpperLimit       :: Float
+    , tickSize                  :: Price
+    , lotSize                   :: Quantity
     } deriving (Show, Eq)
 
 
 initMEState :: MEState
-initMEState = MEState (OrderBook [] []) Map.empty Map.empty 10 0.9 0.9 100 0.2
+initMEState = MEState (OrderBook [] []) Map.empty Map.empty 10 0.9 0.9 100 0.2 1 1
 
 
 data Request = NewOrderRq
@@ -131,6 +133,10 @@ data Request = NewOrderRq
     { newStaticPriceBandUpperLimit :: Float
     } | SetOwnershipUpperLimitRq
     { newOwnershipUpperLimit :: Float
+    } | SetTickSizeRq
+    { newTickSize :: Price
+    } | SetLotSizeRq
+    { newLotSize :: Quantity
     } deriving (Show, Eq)
 
 
@@ -169,6 +175,12 @@ data Response = NewOrderRs
     { status :: ResponseStatus
     , state  :: MEState
     } | SetOwnershipUpperLimitRs
+    { status :: ResponseStatus
+    , state  :: MEState
+    } | SetTickSizeRs
+    { status :: ResponseStatus
+    , state  :: MEState
+    } | SetLotSizeRs
     { status :: ResponseStatus
     , state  :: MEState
     } deriving (Show, Eq)

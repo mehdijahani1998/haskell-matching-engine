@@ -99,6 +99,12 @@ fRequest (SetStaticPriceBandUpperLimitRq pb) =
 fRequest (SetOwnershipUpperLimitRq ol) =
     printf "SetOwnershipUpperLimitRq\t%f\n" ol
 
+fRequest (SetTickSizeRq tick) =
+    printf "SetTickSizeRq\t%d\n" tick
+
+fRequest (SetLotSizeRq lot) =
+    printf "SetLotSizeRq\t%d\n" lot
+
 
 fResponse :: Response -> String
 fResponse (NewOrderRs s ts statesnapshot) =
@@ -131,6 +137,12 @@ fResponse (SetStaticPriceBandUpperLimitRs s _) =
 fResponse (SetOwnershipUpperLimitRs s _) =
     printf "SetOwnershipUpperLimitRs\t%s\n" (show s)
 
+fResponse (SetTickSizeRs s _) =
+    printf "SetTickSizeRs\t%s\n" (show s)
+
+fResponse (SetLotSizeRs s _) =
+    printf "SetLotSizeRs\t%s\n" (show s)
+
 
 fMap :: Show a => Show b => String -> Map.Map a b -> String
 fMap prefix m = concatMap (\(i, j) -> printf "\t%s\t%s\t%s\n" prefix (show i) (show j)) $ Map.toList m
@@ -156,14 +168,24 @@ fOwnershipLimits :: Quantity -> Float -> String
 fOwnershipLimits = printf "\tTotalShares\t%d\n\tOwnershipUpperLimit\t%f\n"
 
 
+fTickSize :: Price -> String
+fTickSize = printf "\tTickSize\t%d\n"
+
+
+fLotSize :: Quantity -> String
+fLotSize = printf "\tLotSize\t%d\n"
+
+
 fState :: MEState -> String
 fState state =
-    printf "%s%s%s%s%s"
+    printf "%s%s%s%s%s%s%s"
     (fOrderBook $ orderBook state)
     (fCreditInfo $ creditInfo state)
     (fOwnershipInfo $ ownershipInfo state)
     (fPriceBands (referencePrice state) (staticPriceBandLowerLimit state) (staticPriceBandUpperLimit state))
     (fOwnershipLimits (totalShares state) (ownershipUpperLimit state))
+    (fTickSize $ tickSize state)
+    (fLotSize $ lotSize state)
 
 
 fInput :: [Request] -> String

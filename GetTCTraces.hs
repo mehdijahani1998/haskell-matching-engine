@@ -57,6 +57,8 @@ genFixture (t:spec)
     | t == "SetStaticPriceBandLowerLimitRq" = genSetStaticPriceBandLowerLimitRq spec
     | t == "SetStaticPriceBandUpperLimitRq" = genSetStaticPriceBandUpperLimitRq spec
     | t == "SetOwnershipUpperLimitRq" = genSetOwnershipUpperLimitRq spec
+    | t == "SetTickSizeRq" = genSetTickSizeRq spec
+    | t == "SetLotSizeRq" = genSetLotSizeRq spec
     | otherwise = error $ "Invalid Fixture Request type " ++ t
 
 
@@ -109,6 +111,20 @@ genSetOwnershipUpperLimitRq spec =
     SetOwnershipUpperLimitRq ol
   where
     ol = read $ head spec :: Float
+
+
+genSetTickSizeRq :: [String] -> Request
+genSetTickSizeRq spec =
+    SetTickSizeRq tick
+  where
+    tick = read $ head spec :: Price
+
+
+genSetLotSizeRq :: [String] -> Request
+genSetLotSizeRq spec =
+    SetLotSizeRq lot
+  where
+    lot = read $ head spec :: Quantity
 
 
 genOrderRq :: OrderID -> [String] -> Request
