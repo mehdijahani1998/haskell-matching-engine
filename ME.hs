@@ -91,16 +91,19 @@ data Trade = Trade
 
 
 data MEState = MEState
-    { orderBook      :: OrderBook
-    , creditInfo     :: CreditInfo
-    , ownershipInfo  :: OwnershipInfo
-    , referencePrice :: Price
-    , totalShares    :: Quantity
+    { orderBook                 :: OrderBook
+    , creditInfo                :: CreditInfo
+    , ownershipInfo             :: OwnershipInfo
+    , referencePrice            :: Price
+    , staticPriceBandLowerLimit :: Float
+    , staticPriceBandUpperLimit :: Float
+    , totalShares               :: Quantity
+    , ownershipUpperLimit       :: Float
     } deriving (Show, Eq)
 
 
 initMEState :: MEState
-initMEState = MEState (OrderBook [] []) Map.empty Map.empty 0 0
+initMEState = MEState (OrderBook [] []) Map.empty Map.empty 10 0.9 0.9 100 0.2
 
 
 data Request = NewOrderRq
@@ -122,6 +125,12 @@ data Request = NewOrderRq
     { newReferencePrice :: Price
     } | SetTotalSharesRq
     { newTotalShares :: Quantity
+    } | SetStaticPriceBandLowerLimitRq
+    { newStaticPriceBandLowerLimit :: Float
+    } | SetStaticPriceBandUpperLimitRq
+    { newStaticPriceBandUpperLimit :: Float
+    } | SetOwnershipUpperLimitRq
+    { newOwnershipUpperLimit :: Float
     } deriving (Show, Eq)
 
 
@@ -151,6 +160,15 @@ data Response = NewOrderRs
     { status :: ResponseStatus
     , state  :: MEState
     } | SetTotalSharesRs
+    { status :: ResponseStatus
+    , state  :: MEState
+    } | SetStaticPriceBandLowerLimitRs
+    { status :: ResponseStatus
+    , state  :: MEState
+    } | SetStaticPriceBandUpperLimitRs
+    { status :: ResponseStatus
+    , state  :: MEState
+    } | SetOwnershipUpperLimitRs
     { status :: ResponseStatus
     , state  :: MEState
     } deriving (Show, Eq)
@@ -183,21 +201,36 @@ rejectedSetReferencePriceRs = SetReferencePriceRs Rejected
 rejectedSetTotalSharesRs :: MEState -> Response
 rejectedSetTotalSharesRs = SetTotalSharesRs Rejected
 
+rejectedSetStaticPriceBandLowerLimitRq :: MEState -> Response
+rejectedSetStaticPriceBandLowerLimitRq = SetStaticPriceBandLowerLimitRs Rejected
+
+rejectedSetStaticPriceBandUpperLimitRq :: MEState -> Response
+rejectedSetStaticPriceBandUpperLimitRq = SetStaticPriceBandUpperLimitRs Rejected
+
+rejectedSetOwnershipUpperLimitRq :: MEState -> Response
+rejectedSetOwnershipUpperLimitRq = SetOwnershipUpperLimitRs Rejected
+
 
 reject :: Request -> MEState -> Response
-reject NewOrderRq {}          = rejectedNewOrderRs
+reject NewOrderRq {} = rejectedNewOrderRs
 
-reject ReplaceOrderRq {}      = rejectedReplaceOrderRs
+reject ReplaceOrderRq {} = rejectedReplaceOrderRs
 
-reject CancelOrderRq {}       = rejectedCancelOrderRs
+reject CancelOrderRq {} = rejectedCancelOrderRs
 
-reject SetCreditRq {}         = rejectedSetCreditRs
+reject SetCreditRq {} = rejectedSetCreditRs
 
-reject SetOwnershipRq {}      = rejectedSetOwnershipRs
+reject SetOwnershipRq {} = rejectedSetOwnershipRs
 
 reject SetReferencePriceRq {} = rejectedSetReferencePriceRs
 
-reject SetTotalSharesRq {}    = rejectedSetTotalSharesRs
+reject SetTotalSharesRq {} = rejectedSetTotalSharesRs
+
+reject SetStaticPriceBandLowerLimitRq {} = rejectedSetStaticPriceBandLowerLimitRq
+
+reject SetStaticPriceBandUpperLimitRq {} = rejectedSetStaticPriceBandUpperLimitRq
+
+reject SetOwnershipUpperLimitRq {} = rejectedSetOwnershipUpperLimitRq
 
 
 valueTraded :: Trade -> Int

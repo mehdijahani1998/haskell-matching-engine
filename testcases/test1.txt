@@ -1,7 +1,10 @@
-16
+19
 8
-SetReferencePrice   10
-SetTotalShares	100
+SetReferencePriceRq   10
+SetStaticPriceBandLowerLimitRq	0.9
+SetStaticPriceBandUpperLimitRq	0.9
+SetTotalSharesRq	100
+SetOwnershipUpperLimitRq 0.2
 SetCreditRq	1	98
 SetCreditRq	2	145
 SetCreditRq	3	65

@@ -12,13 +12,6 @@ import           Ownership
 import           PriceBand
 import           Validation
 
-ownershipUpperLimit :: Float
-ownershipUpperLimit = 0.2
-staticPriceBandUpperLimit :: Float
-staticPriceBandUpperLimit = 0.9
-staticPriceBandLowerLimit :: Float
-staticPriceBandLowerLimit = 0.9
-
 
 newOrderMatcher :: Handler
 newOrderMatcher (NewOrderRq o) s = do
@@ -76,8 +69,8 @@ newOrderHandler =
     fillAndKillProc $
     minQuantityCheck $
     creditLimitProc $
-    ownershipCheck ownershipUpperLimit $
-    pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
+    ownershipCheck $
+    pricebandCheck $
     arrivingOrderDecorator $
     validateOrder
     handlerSeed
@@ -86,8 +79,8 @@ newOrderHandler =
 cancelOrderHandler :: Handler
 cancelOrderHandler =
     creditLimitProc $
-    ownershipCheck ownershipUpperLimit $
-    pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
+    ownershipCheck $
+    pricebandCheck $
     arrivingOrderDecorator $
     validateOrder
     handlerSeed
@@ -96,8 +89,8 @@ cancelOrderHandler =
 replaceOrderHandler :: Handler
 replaceOrderHandler =
     creditLimitProc $
-    ownershipCheck ownershipUpperLimit $
-    pricebandCheck staticPriceBandLowerLimit staticPriceBandUpperLimit $
+    ownershipCheck $
+    pricebandCheck $
     arrivingOrderDecorator $
     validateOrder
     handlerSeed
@@ -122,5 +115,14 @@ requestHandler (SetOwnershipRq sh i) s = do
 requestHandler (SetReferencePriceRq rp) s = do
     return (SetReferencePriceRs Accepted s { referencePrice = rp })
 
-requestHandler (SetTotalSharesRq rp) s = do
-    return (SetTotalSharesRs Accepted s { totalShares = rp })
+requestHandler (SetTotalSharesRq ts) s = do
+    return (SetTotalSharesRs Accepted s { totalShares = ts })
+
+requestHandler (SetStaticPriceBandLowerLimitRq pb) s = do
+    return (SetStaticPriceBandLowerLimitRs Accepted s { staticPriceBandLowerLimit = pb })
+
+requestHandler (SetStaticPriceBandUpperLimitRq pb) s = do
+    return (SetStaticPriceBandUpperLimitRs Accepted s { staticPriceBandUpperLimit = pb })
+
+requestHandler (SetOwnershipUpperLimitRq ol) s = do
+    return (SetOwnershipUpperLimitRs Accepted s { ownershipUpperLimit = ol })

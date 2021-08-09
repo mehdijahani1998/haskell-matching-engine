@@ -6,19 +6,19 @@ import           Decorator
 import           ME
 
 
-ownershipCheck :: Float -> Decorator
-ownershipCheck maxOwnershipPortion =
-    decorateOnAccept "OSC" $ ownershipCheckByType maxOwnershipPortion
+ownershipCheck :: Decorator
+ownershipCheck =
+    decorateOnAccept "OSC" $ ownershipCheckByType
 
 
-ownershipCheckByType :: Float -> PartialDecorator
-ownershipCheckByType maxOwnershipPortion rq@NewOrderRq {} s rs =
-    ownershipCheckForArrivingOrder maxOwnershipPortion rq s rs
+ownershipCheckByType :: PartialDecorator
+ownershipCheckByType rq@NewOrderRq {} s rs =
+    ownershipCheckForArrivingOrder rq s rs
 
-ownershipCheckByType maxOwnershipPortion rq@ReplaceOrderRq {} s rs =
-    ownershipCheckForArrivingOrder maxOwnershipPortion rq s rs
+ownershipCheckByType rq@ReplaceOrderRq {} s rs =
+    ownershipCheckForArrivingOrder rq s rs
 
-ownershipCheckByType _ _ _ rs =
+ownershipCheckByType _ _ rs =
     rs `covers` "OSC-P"
 
 
@@ -33,11 +33,12 @@ getOldOrder _ =
     Nothing
 
 
-ownershipCheckForArrivingOrder :: Float -> PartialDecorator
-ownershipCheckForArrivingOrder maxOwnershipPortion rq s rs = do
+ownershipCheckForArrivingOrder :: PartialDecorator
+ownershipCheckForArrivingOrder rq s rs = do
     let o = order rq
     let oldo = getOldOrder rs
     let s' = state rs
+    let maxOwnershipPortion = ownershipUpperLimit s
     if ownershipPreCheck maxOwnershipPortion o oldo s
         then rs { state = updateOwnershipInfo (trades rs) s' } `covers` "OSC1"
         else reject rq s `covers` "OSC2"

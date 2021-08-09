@@ -55,6 +55,7 @@ fOptional (Just n) = n
 fOrder :: Order -> String
 fOrder (LimitOrder i bi shi p q s mq fak) =
     printf "Limit\t%d\t%d\t%d\t%d\t%d\t%s\t%d\t%s\t0" i bi shi p q (fSide s) (fOptional mq) (fFAK fak)
+
 fOrder (IcebergOrder i bi shi p q s mq fak dq ps) =
     printf "Iceberg\t%d\t%d\t%d\t%d\t%d\t%s\t%d\t%s\t%d" i bi shi p q (fSide s) (fOptional mq) (fFAK fak) ps
 
@@ -70,35 +71,65 @@ fTrades ts = foldl (++) (printf "\tTrades\t%d\n" $ length ts) $ map fTrade ts
 fRequest :: Request -> String
 fRequest (NewOrderRq o) =
     printf "NewOrderRq\t\t%s\n" $ fOrder o
+
 fRequest (CancelOrderRq rqid oid side) =
     printf "CancelOrderRq\t%d\t\t%d\t\t\t\t\t%s\n" oid rqid $ fSide side
+
 fRequest (ReplaceOrderRq oldoid o) =
     printf "ReplaceOrderRq\t%d\t%s\n" oldoid $ fOrder o
+
 fRequest (SetCreditRq b c) =
     printf "SetCreditRq\t%d\t%d\n" b c
+
 fRequest (SetOwnershipRq sh i) =
     printf "SetOwnershipRq\t%d\t%d\n" sh i
+
 fRequest (SetReferencePriceRq rp) =
     printf "SetReferencePriceRq\t%d\n" rp
-fRequest (SetTotalSharesRq rp) =
-    printf "SetTotalSharesRq\t%d\n" rp
+
+fRequest (SetTotalSharesRq ts) =
+    printf "SetTotalSharesRq\t%d\n" ts
+
+fRequest (SetStaticPriceBandLowerLimitRq pb) =
+    printf "SetStaticPriceBandLowerLimitRq\t%f\n" pb
+
+fRequest (SetStaticPriceBandUpperLimitRq pb) =
+    printf "SetOwnershipUpperLimitRq\t%f\n" pb
+
+fRequest (SetOwnershipUpperLimitRq ol) =
+    printf "SetOwnershipUpperLimitRq\t%f\n" ol
 
 
 fResponse :: Response -> String
 fResponse (NewOrderRs s ts statesnapshot) =
     printf "NewOrderRs\t%s\n%s%s" (show s) (fTrades ts) (fState statesnapshot)
+
 fResponse (CancelOrderRs s _ statesnapshot) =
     printf "CancelOrderRs\t%s\n%s" (show s) (fState statesnapshot)
+
 fResponse (ReplaceOrderRs s _ ts statesnapshot) =
     printf "ReplaceOrderRs\t%s\n%s%s" (show s) (fTrades ts) (fState statesnapshot)
+
 fResponse (SetCreditRs s _) =
     printf "SetCreditRs\t%s\n" (show s)
+
 fResponse (SetOwnershipRs s _) =
     printf "SetOwnershipRs\t%s\n" (show s)
+
 fResponse (SetReferencePriceRs s _) =
     printf "SetReferencePriceRs\t%s\n" (show s)
+
 fResponse (SetTotalSharesRs s _) =
     printf "SetTotalSharesRs\t%s\n" (show s)
+
+fResponse (SetStaticPriceBandLowerLimitRs s _) =
+    printf "SetStaticPriceBandLowerLimitRs\t%s\n" (show s)
+
+fResponse (SetStaticPriceBandUpperLimitRs s _) =
+    printf "SetStaticPriceBandUpperLimitRs\t%s\n" (show s)
+
+fResponse (SetOwnershipUpperLimitRs s _) =
+    printf "SetOwnershipUpperLimitRs\t%s\n" (show s)
 
 
 fMap :: Show a => Show b => String -> Map.Map a b -> String
@@ -117,17 +148,22 @@ fOwnershipInfo :: OwnershipInfo -> String
 fOwnershipInfo os = printf "\tOwnerships\t%d\n%s" (length os) (fMap "Ownership" os)
 
 
-fReferencePrice :: Price -> String
-fReferencePrice = printf "\tReferencePrice\t%d\n"
+fPriceBands :: Price -> Float -> Float -> String
+fPriceBands = printf "\tReferencePrice\t%d\n\tStaticPriceBandLowerLimit\t%f\n\tStaticPriceBandUpperLimit\t%f\n"
 
 
-fTotalShares :: Quantity -> String
-fTotalShares = printf "\tTotalShares\t%d\n"
+fOwnershipLimits :: Quantity -> Float -> String
+fOwnershipLimits = printf "\tTotalShares\t%d\n\tOwnershipUpperLimit\t%f\n"
 
 
 fState :: MEState -> String
-fState (MEState orderBook creditInfo ownershipInfo referencePrice totalShares) =
-    printf "%s%s%s%s%s" (fOrderBook orderBook) (fCreditInfo creditInfo) (fOwnershipInfo ownershipInfo) (fReferencePrice referencePrice) (fTotalShares totalShares)
+fState state =
+    printf "%s%s%s%s%s"
+    (fOrderBook $ orderBook state)
+    (fCreditInfo $ creditInfo state)
+    (fOwnershipInfo $ ownershipInfo state)
+    (fPriceBands (referencePrice state) (staticPriceBandLowerLimit state) (staticPriceBandUpperLimit state))
+    (fOwnershipLimits (totalShares state) (ownershipUpperLimit state))
 
 
 fInput :: [Request] -> String

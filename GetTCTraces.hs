@@ -52,8 +52,11 @@ genFixture :: [String] -> Request
 genFixture (t:spec)
     | t == "SetCreditRq" = genSetCreditRq spec
     | t == "SetOwnershipRq" = genSetOwnershipRq spec
-    | t == "SetReferencePrice" = genSetReferencePriceRq spec
-    | t == "SetTotalShares" = genSetTotalSharesRq spec
+    | t == "SetReferencePriceRq" = genSetReferencePriceRq spec
+    | t == "SetTotalSharesRq" = genSetTotalSharesRq spec
+    | t == "SetStaticPriceBandLowerLimitRq" = genSetStaticPriceBandLowerLimitRq spec
+    | t == "SetStaticPriceBandUpperLimitRq" = genSetStaticPriceBandUpperLimitRq spec
+    | t == "SetOwnershipUpperLimitRq" = genSetOwnershipUpperLimitRq spec
     | otherwise = error $ "Invalid Fixture Request type " ++ t
 
 
@@ -61,30 +64,51 @@ genSetCreditRq :: [String] -> Request
 genSetCreditRq spec =
     SetCreditRq brokerID credit
   where
-        brokerID = read $ spec !! 0 :: BrokerID
-        credit = read $ spec !! 1 :: Int
+    brokerID = read $ spec !! 0 :: BrokerID
+    credit = read $ spec !! 1 :: Int
 
 
 genSetOwnershipRq :: [String] -> Request
 genSetOwnershipRq spec =
     SetOwnershipRq shareholderID credit
   where
-        shareholderID = read $ spec !! 0 :: ShareholderID
-        credit = read $ spec !! 1 :: Int
+    shareholderID = read $ spec !! 0 :: ShareholderID
+    credit = read $ spec !! 1 :: Int
 
 
 genSetReferencePriceRq :: [String] -> Request
 genSetReferencePriceRq spec =
-    SetReferencePriceRq referencePrice
+    SetReferencePriceRq rp
   where
-        referencePrice = read $ spec !! 0 :: Price
+    rp = read $ head spec :: Price
 
 
 genSetTotalSharesRq :: [String] -> Request
 genSetTotalSharesRq spec =
-    SetTotalSharesRq totalShares
+    SetTotalSharesRq ts
   where
-        totalShares = read $ spec !! 0 :: Quantity
+    ts = read $ head spec :: Quantity
+
+
+genSetStaticPriceBandLowerLimitRq :: [String] -> Request
+genSetStaticPriceBandLowerLimitRq spec =
+    SetStaticPriceBandLowerLimitRq pb
+  where
+    pb = read $ head spec :: Float
+
+
+genSetStaticPriceBandUpperLimitRq :: [String] -> Request
+genSetStaticPriceBandUpperLimitRq spec =
+    SetStaticPriceBandUpperLimitRq pb
+  where
+    pb = read $ head spec :: Float
+
+
+genSetOwnershipUpperLimitRq :: [String] -> Request
+genSetOwnershipUpperLimitRq spec =
+    SetOwnershipUpperLimitRq ol
+  where
+    ol = read $ head spec :: Float
 
 
 genOrderRq :: OrderID -> [String] -> Request
