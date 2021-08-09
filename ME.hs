@@ -95,11 +95,12 @@ data MEState = MEState
     , creditInfo     :: CreditInfo
     , ownershipInfo  :: OwnershipInfo
     , referencePrice :: Price
+    , totalShares    :: Quantity
     } deriving (Show, Eq)
 
 
 initMEState :: MEState
-initMEState = MEState (OrderBook [] []) Map.empty Map.empty 0
+initMEState = MEState (OrderBook [] []) Map.empty Map.empty 0 0
 
 
 data Request = NewOrderRq
@@ -118,7 +119,9 @@ data Request = NewOrderRq
     { shareholder :: ShareholderID
     , shares      :: Int
     } | SetReferencePriceRq
-    { newReferencePrice :: Int
+    { newReferencePrice :: Price
+    } | SetTotalSharesRq
+    { newTotalShares :: Quantity
     } deriving (Show, Eq)
 
 
@@ -145,6 +148,9 @@ data Response = NewOrderRs
     { status :: ResponseStatus
     , state  :: MEState
     } | SetReferencePriceRs
+    { status :: ResponseStatus
+    , state  :: MEState
+    } | SetTotalSharesRs
     { status :: ResponseStatus
     , state  :: MEState
     } deriving (Show, Eq)
@@ -174,6 +180,10 @@ rejectedSetReferencePriceRs :: MEState -> Response
 rejectedSetReferencePriceRs = SetReferencePriceRs Rejected
 
 
+rejectedSetTotalSharesRs :: MEState -> Response
+rejectedSetTotalSharesRs = SetTotalSharesRs Rejected
+
+
 reject :: Request -> MEState -> Response
 reject NewOrderRq {}          = rejectedNewOrderRs
 
@@ -186,6 +196,8 @@ reject SetCreditRq {}         = rejectedSetCreditRs
 reject SetOwnershipRq {}      = rejectedSetOwnershipRs
 
 reject SetReferencePriceRq {} = rejectedSetReferencePriceRs
+
+reject SetTotalSharesRq {}    = rejectedSetTotalSharesRs
 
 
 valueTraded :: Trade -> Int

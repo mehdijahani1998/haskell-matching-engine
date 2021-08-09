@@ -53,6 +53,7 @@ genFixture (t:spec)
     | t == "SetCreditRq" = genSetCreditRq spec
     | t == "SetOwnershipRq" = genSetOwnershipRq spec
     | t == "SetReferencePrice" = genSetReferencePriceRq spec
+    | t == "SetTotalShares" = genSetTotalSharesRq spec
     | otherwise = error $ "Invalid Fixture Request type " ++ t
 
 
@@ -76,7 +77,14 @@ genSetReferencePriceRq :: [String] -> Request
 genSetReferencePriceRq spec =
     SetReferencePriceRq referencePrice
   where
-        referencePrice = read $ spec !! 0 :: Int
+        referencePrice = read $ spec !! 0 :: Price
+
+
+genSetTotalSharesRq :: [String] -> Request
+genSetTotalSharesRq spec =
+    SetTotalSharesRq totalShares
+  where
+        totalShares = read $ spec !! 0 :: Quantity
 
 
 genOrderRq :: OrderID -> [String] -> Request

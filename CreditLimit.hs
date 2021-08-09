@@ -47,18 +47,20 @@ updateCreditByTrade s t =
 
 
 updateBuyerCreditByTrade :: MEState -> Trade -> MEState
-updateBuyerCreditByTrade (MEState ob ci si rp) t =
-    MEState ob (Map.insert bid newCredit ci) si rp
+updateBuyerCreditByTrade state t =
+    state {creditInfo = Map.insert bid newCredit ci}
   where
     bid = buyerBrId t
+    ci = creditInfo state
     newCredit = ci Map.! bid - valueTraded t
 
 
 updateSellerCreditByTrade :: MEState -> Trade -> MEState
-updateSellerCreditByTrade (MEState ob ci si rp) t =
-    MEState ob (Map.insert sid newCredit ci) si rp
+updateSellerCreditByTrade state t =
+    state {creditInfo = Map.insert sid newCredit ci}
   where
     sid = sellerBrId t
+    ci = creditInfo state
     newCredit = ci Map.! sid + valueTraded t
 
 

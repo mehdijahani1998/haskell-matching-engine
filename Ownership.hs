@@ -44,8 +44,10 @@ ownershipCheckForArrivingOrder maxOwnership rq s rs = do
 
 
 updateOwnershipInfo :: [Trade] -> MEState -> MEState
-updateOwnershipInfo ts (MEState ob ci oi rp) =
-  MEState ob ci (Prelude.foldl updateOwnership oi ts) rp
+updateOwnershipInfo ts state =
+    state {ownershipInfo = Prelude.foldl updateOwnership oi ts}
+  where
+    oi = ownershipInfo state
 
 
 updateOwnership :: OwnershipInfo -> Trade -> OwnershipInfo
@@ -73,12 +75,14 @@ quantityInQueue o q =
 
 
 ownershipPreCheck :: Int -> Order -> Maybe Order -> MEState -> Bool
-ownershipPreCheck maxOwnership o oldOrder (MEState ob _ ownership _) = do
+ownershipPreCheck maxOwnership o oldOrder state = do
     shi `member` ownership && case side o of
         Buy  -> (ownership!shi) + (quantity o) + (totalQuantity Buy shi ob) - (quantityInBook oldOrder ob) < maxOwnership
         Sell -> (quantity o) + (totalQuantity Sell shi ob) - (quantityInBook oldOrder ob) <= (ownership!shi)
   where
     shi = shid o
+    ownership = ownershipInfo state
+    ob = orderBook state
 
 
 totalQuantity :: Side -> ShareholderID -> OrderBook -> Quantity

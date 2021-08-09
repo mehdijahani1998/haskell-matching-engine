@@ -121,3 +121,6 @@ requestHandler (SetOwnershipRq sh i) s = do
 
 requestHandler (SetReferencePriceRq rp) s = do
     return (SetReferencePriceRs Accepted s { referencePrice = rp })
+
+requestHandler (SetTotalSharesRq rp) s = do
+    return (SetTotalSharesRs Accepted s { totalShares = rp })

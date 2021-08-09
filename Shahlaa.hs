@@ -80,6 +80,8 @@ fRequest (SetOwnershipRq sh i) =
     printf "SetOwnershipRq\t%d\t%d\n" sh i
 fRequest (SetReferencePriceRq rp) =
     printf "SetReferencePriceRq\t%d\n" rp
+fRequest (SetTotalSharesRq rp) =
+    printf "SetTotalSharesRq\t%d\n" rp
 
 
 fResponse :: Response -> String
@@ -95,6 +97,8 @@ fResponse (SetOwnershipRs s _) =
     printf "SetOwnershipRs\t%s\n" (show s)
 fResponse (SetReferencePriceRs s _) =
     printf "SetReferencePriceRs\t%s\n" (show s)
+fResponse (SetTotalSharesRs s _) =
+    printf "SetTotalSharesRs\t%s\n" (show s)
 
 
 fMap :: Show a => Show b => String -> Map.Map a b -> String
@@ -117,9 +121,13 @@ fReferencePrice :: Price -> String
 fReferencePrice = printf "\tReferencePrice\t%d\n"
 
 
+fTotalShares :: Quantity -> String
+fTotalShares = printf "\tTotalShares\t%d\n"
+
+
 fState :: MEState -> String
-fState (MEState orderBook creditInfo ownershipInfo referencePrice) =
-    printf "%s%s%s%s" (fOrderBook orderBook) (fCreditInfo creditInfo) (fOwnershipInfo ownershipInfo) (fReferencePrice referencePrice)
+fState (MEState orderBook creditInfo ownershipInfo referencePrice totalShares) =
+    printf "%s%s%s%s%s" (fOrderBook orderBook) (fCreditInfo creditInfo) (fOwnershipInfo ownershipInfo) (fReferencePrice referencePrice) (fTotalShares totalShares)
 
 
 fInput :: [Request] -> String
