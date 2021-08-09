@@ -128,25 +128,25 @@ data ResponseStatus = Accepted | Eliminated | Rejected deriving (Show, Eq)
 data Response = NewOrderRs
     { status :: ResponseStatus
     , trades :: [Trade]
-    , state :: MEState
+    , state  :: MEState
     } | CancelOrderRs
     { status   :: ResponseStatus
     , oldOrder :: Maybe Order
-    , state :: MEState
+    , state    :: MEState
     } | ReplaceOrderRs
     { status   :: ResponseStatus
     , oldOrder :: Maybe Order
     , trades   :: [Trade]
-    , state :: MEState
+    , state    :: MEState
     } | SetCreditRs
     { status :: ResponseStatus
-    , state :: MEState
+    , state  :: MEState
     } | SetOwnershipRs
     { status :: ResponseStatus
-    , state :: MEState
+    , state  :: MEState
     } | SetReferencePriceRs
     { status :: ResponseStatus
-    , state :: MEState
+    , state  :: MEState
     } deriving (Show, Eq)
 
 
@@ -175,15 +175,15 @@ rejectedSetReferencePriceRs = SetReferencePriceRs Rejected
 
 
 reject :: Request -> MEState -> Response
-reject NewOrderRq {} = rejectedNewOrderRs
+reject NewOrderRq {}          = rejectedNewOrderRs
 
-reject ReplaceOrderRq {} = rejectedReplaceOrderRs
+reject ReplaceOrderRq {}      = rejectedReplaceOrderRs
 
-reject CancelOrderRq {} = rejectedCancelOrderRs
+reject CancelOrderRq {}       = rejectedCancelOrderRs
 
-reject SetCreditRq {} = rejectedSetCreditRs
+reject SetCreditRq {}         = rejectedSetCreditRs
 
-reject SetOwnershipRq {} = rejectedSetOwnershipRs
+reject SetOwnershipRq {}      = rejectedSetOwnershipRs
 
 reject SetReferencePriceRq {} = rejectedSetReferencePriceRs
 
