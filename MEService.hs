@@ -104,13 +104,13 @@ replaceOrderHandler =
 
 
 requestHandler :: Handler
-requestHandler rq@(NewOrderRq o) s =
+requestHandler rq@NewOrderRq {} s =
     newOrderHandler rq s
 
-requestHandler rq@(CancelOrderRq rqid oid side) s =
+requestHandler rq@CancelOrderRq {} s =
     cancelOrderHandler rq s
 
-requestHandler rq@(ReplaceOrderRq oldoid o) s =
+requestHandler rq@ReplaceOrderRq {} s =
     replaceOrderHandler rq s
 
 requestHandler (SetCreditRq b c) s = do
