@@ -24,7 +24,7 @@ main = do
     handle <- openFile addr ReadMode
     contents <- hGetContents handle
     let rawRequests = lines contents
-    let requests = [genRequest rqid $ words rawRequest | (rqid, rawRequest) <- indexOrders rawRequests]
+    let requests = [genRequest rqid $ words rawRequest | (rqid, rawRequest) <- indexRequests rawRequests]
     let tc = addOracle requests
 
     if func == "--trades"
@@ -55,14 +55,14 @@ genRequest _ [] = error "Empty Request"
 
 
 
-indexOrders :: [String] -> [(Int, String)]
-indexOrders =
-    go 1
+indexRequests :: [String] -> [(Int, String)]
+indexRequests =
+    go 1 1
   where
-    go i (h:t) = if head (words h) `elem` ["NewOrderRq", "ReplaceOrderRq", "CancelOrderRq"]
-        then (i, h) : go (i + 1) t
-        else (0, h) : go i t
-    go _ _      = []
+    go i j (h:t) = if head (words h) `elem` ["NewOrderRq", "ReplaceOrderRq", "CancelOrderRq"]
+        then (i, h) : go (i + 1) j t
+        else (j, h) : go i (j + 1) t
+    go _ _ _     = []
 
 
 genSetCreditRq :: [String] -> Request
