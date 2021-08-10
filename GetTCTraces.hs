@@ -1,5 +1,4 @@
 import           Control.Monad
-import           Data.List.Index
 import           System.Environment
 import           System.Exit
 import           System.IO
@@ -51,6 +50,8 @@ genRequest rqid (t:spec)
     | t == "SetTickSizeRq" = genSetTickSizeRq spec
     | t == "SetLotSizeRq" = genSetLotSizeRq spec
     | otherwise = error $ "Invalid Request type " ++ t
+
+genRequest _ [] = error "Empty Request"
 
 
 
@@ -127,14 +128,6 @@ genSetLotSizeRq spec =
     SetLotSizeRq lot
   where
     lot = read $ head spec :: Quantity
-
-
-genOrderRq :: OrderID -> [String] -> Request
-genOrderRq newoid (t:spec)
-    | t == "NewOrderRq" = NewOrderRq $ genOrder newoid spec
-    | t == "ReplaceOrderRq" = genReplaceOrderRq newoid spec
-    | t == "CancelOrderRq" = genCancelOrderRq newoid spec
-    | otherwise = error $ "Invalid Order Request type " ++ t
 
 
 genOrder :: OrderID -> [String] -> Order
