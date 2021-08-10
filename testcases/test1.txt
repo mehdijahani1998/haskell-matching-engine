@@ -21,9 +21,9 @@ SetOwnershipRq	6	19
 SetOwnershipRq	7	0
 NewOrderRq	2	4	10	9	False	0	False	4
 NewOrderRq	4	3	3	2	False	0	False	0
-CancelOrderRq	1	False
+CancelOrderRq	2	False
 NewOrderRq	3	1	9	3	True	0	False	0
 NewOrderRq	4	3	10	2	False	0	False	0
-ReplaceOrderRq	4	4	3	3	2	False	0	False	0
+ReplaceOrderRq	5	4	3	3	2	False	0	False	0
 NewOrderRq	6	6	3	19	False	0	False	4
 NewOrderRq	7	7	3	19	True	0	False	4

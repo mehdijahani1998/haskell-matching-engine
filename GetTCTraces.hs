@@ -56,7 +56,7 @@ genRequest rqid (t:spec)
 
 indexOrders :: [String] -> [(Int, String)]
 indexOrders =
-    go 0
+    go 1
   where
     go i (h:t) = if head (words h) `elem` ["NewOrderRq", "ReplaceOrderRq", "CancelOrderRq"]
         then (i, h) : go (i + 1) t
