@@ -1,5 +1,3 @@
-21
-8
 SetTickSizeRq   1
 SetLotSizeRq   1
 SetReferencePriceRq   10

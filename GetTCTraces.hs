@@ -24,21 +24,9 @@ main = do
 
     handle <- openFile addr ReadMode
     contents <- hGetContents handle
-
-    let cntLines = lines contents
-
-    let fixtureSize = read $ head cntLines :: Int
-    let tcSize = read $ cntLines !! 1 :: Int
-    let rawFixtures = (take fixtureSize . drop 2) cntLines
-    let rawOrders = drop (2 + fixtureSize) cntLines
-
-    when (length rawOrders /= tcSize)
-        $ error "Wrong fixtureSize and tcSize"
-
-    let fixtures = [genFixture $ words rawFixture | rawFixture <- rawFixtures]
-    let orders = [genOrderRq i $ words rawOrder | (i, rawOrder) <- indexed rawOrders]
-
-    let tc = addOracle $ fixtures ++ orders
+    let rawRequests = lines contents
+    let requests = [genRequest rqid $ words rawRequest | (rqid, rawRequest) <- indexOrders rawRequests]
+    let tc = addOracle requests
 
     if func == "--trades"
         then putStrLn $ fTestCase tc
@@ -48,8 +36,11 @@ main = do
     hClose handle
 
 
-genFixture :: [String] -> Request
-genFixture (t:spec)
+genRequest :: OrderID -> [String] -> Request
+genRequest rqid (t:spec)
+    | t == "NewOrderRq" = NewOrderRq $ genOrder rqid spec
+    | t == "ReplaceOrderRq" = genReplaceOrderRq rqid spec
+    | t == "CancelOrderRq" = genCancelOrderRq rqid spec
     | t == "SetCreditRq" = genSetCreditRq spec
     | t == "SetOwnershipRq" = genSetOwnershipRq spec
     | t == "SetReferencePriceRq" = genSetReferencePriceRq spec
@@ -59,7 +50,18 @@ genFixture (t:spec)
     | t == "SetOwnershipUpperLimitRq" = genSetOwnershipUpperLimitRq spec
     | t == "SetTickSizeRq" = genSetTickSizeRq spec
     | t == "SetLotSizeRq" = genSetLotSizeRq spec
-    | otherwise = error $ "Invalid Fixture Request type " ++ t
+    | otherwise = error $ "Invalid Request type " ++ t
+
+
+
+indexOrders :: [String] -> [(Int, String)]
+indexOrders =
+    go 0
+  where
+    go i (h:t) = if head (words h) `elem` ["NewOrderRq", "ReplaceOrderRq", "CancelOrderRq"]
+        then (i, h) : go (i + 1) t
+        else (0, h) : go i t
+    go _ _      = []
 
 
 genSetCreditRq :: [String] -> Request
