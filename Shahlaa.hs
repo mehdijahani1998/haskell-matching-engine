@@ -94,7 +94,7 @@ fRequest (SetStaticPriceBandLowerLimitRq pb) =
     printf "SetStaticPriceBandLowerLimitRq\t%f\n" pb
 
 fRequest (SetStaticPriceBandUpperLimitRq pb) =
-    printf "SetOwnershipUpperLimitRq\t%f\n" pb
+    printf "SetStaticPriceBandUpperLimitRq\t%f\n" pb
 
 fRequest (SetOwnershipUpperLimitRq ol) =
     printf "SetOwnershipUpperLimitRq\t%f\n" ol

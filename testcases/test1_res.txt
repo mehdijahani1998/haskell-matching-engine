@@ -3,7 +3,7 @@ SetTickSizeRq	1
 SetLotSizeRq	1
 SetReferencePriceRq	10
 SetStaticPriceBandLowerLimitRq	0.9
-SetOwnershipUpperLimitRq	0.9
+SetStaticPriceBandUpperLimitRq	0.9
 SetTotalSharesRq	100
 SetOwnershipUpperLimitRq	0.2
 SetCreditRq	1	98
