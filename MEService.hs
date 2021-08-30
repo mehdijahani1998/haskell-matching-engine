@@ -35,9 +35,12 @@ orderReplacer (ReplaceOrderRq oldoid oNotAdjusted) s = do
         then return (ReplaceOrderRs Rejected Nothing [] s)
         else do
             let oldOrder = fromJust oldo
-            let o = adjustPeakSizeOnReplace oldOrder oNotAdjusted
-            (ob'', ts) <- if shouldReplaceInPlace oldOrder o then replaceOrderInPlace (oid oldOrder) o ob else matchNewOrder o ob'
-            return (ReplaceOrderRs Accepted oldo ts s { orderBook = ob''})
+            if postponedCheckOnReplace oldOrder oNotAdjusted
+                then do
+                    let o = adjustPeakSizeOnReplace oldOrder oNotAdjusted
+                    (ob'', ts) <- if shouldReplaceInPlace oldOrder o then replaceOrderInPlace (oid oldOrder) o ob else matchNewOrder o ob'
+                    return (ReplaceOrderRs Accepted oldo ts s { orderBook = ob''})
+                else return (ReplaceOrderRs Rejected Nothing [] s)
 
 
 handlerSeed :: Handler

@@ -1,4 +1,7 @@
-module Validation (validateOrder) where
+module Validation
+    ( validateOrder
+    , postponedCheckOnReplace
+    ) where
 
 import           Coverage
 import           Decorator
@@ -10,6 +13,7 @@ validateOrder hdlr =
     decorateOnAccept "VAL-PR" validatePriceDecorator $
     decorateOnAccept "VAL-QTY" validateQtyDecorator $
     decorateOnAccept "VAL-AttrGen" validateAttrGeneralDecorator $
+    decorateOnAccept "VAL-Replace" validateOnReplaceDecorator $
     hdlr
 
 
@@ -116,3 +120,43 @@ validateFakWithMinQty order =
   where
     fak = fillAndKill order
     m = minQty order
+
+
+validateOnReplaceDecorator :: PartialDecorator
+validateOnReplaceDecorator rq@ReplaceOrderRq{} s rs =
+    validateOnReplace rq s rs
+
+validateOnReplaceDecorator _ _ rs =
+    rs `covers` "VAL-Replace-P"
+
+
+validateOnReplace :: PartialDecorator
+validateOnReplace rq s rs =
+    if prohibitMinQty o
+        then rs `covers` "VAL-Replace-1"
+        else reject rq s `covers` "VAL-Replace-2"
+  where
+    o = order rq
+
+
+prohibitMinQty :: Order -> Bool
+prohibitMinQty order =
+    case m of
+        Nothing -> True
+        Just _ -> False
+  where
+    m = minQty order
+
+
+postponedCheckOnReplace :: Order -> Order -> Bool
+postponedCheckOnReplace oldOrder newOrderNotAdjusted =
+    newShareholder == oldShareholder &&
+    newBroker == oldBroker &&
+    newSide == oldSide
+  where
+    newShareholder = shid newOrderNotAdjusted
+    oldShareholder = shid oldOrder
+    newBroker = brid newOrderNotAdjusted
+    oldBroker = brid oldOrder
+    newSide = side newOrderNotAdjusted
+    oldSide = side oldOrder
