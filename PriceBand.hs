@@ -37,5 +37,5 @@ pricebandPreCheck minPriceBandPortion maxPriceBandPortion referencePrice o =
     lowerPriceLimit <= p && p <= upperpriceLimit
   where
     p = price o
-    upperpriceLimit = floor $ fromIntegral referencePrice * (1 + maxPriceBandPortion)
-    lowerPriceLimit = ceiling $ fromIntegral referencePrice * (1 - minPriceBandPortion)
+    upperpriceLimit = referencePrice + floor (fromIntegral referencePrice * maxPriceBandPortion)
+    lowerPriceLimit = referencePrice - floor (fromIntegral referencePrice * minPriceBandPortion)
