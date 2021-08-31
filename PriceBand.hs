@@ -7,7 +7,7 @@ import           ME
 
 pricebandCheck :: Decorator
 pricebandCheck =
-    decorateOnAccept "PBC" $ pricebandCheckByType
+    decorateOnAccept "PBC" pricebandCheckByType
 
 
 pricebandCheckByType :: PartialDecorator
