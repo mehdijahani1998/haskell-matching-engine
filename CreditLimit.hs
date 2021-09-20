@@ -13,24 +13,23 @@ creditSpentByBuyer buyerId ts =
     filter (\t -> sellerBrId t /= buyerId) ts
 
 
-totalWorthInQueue :: Side -> ShareholderID -> OrderBook -> Int
-totalWorthInQueue side shi ob =
+totalWorthInQueue :: Side -> BrokerID -> OrderBook -> Int
+totalWorthInQueue side bri ob =
     sum $
     map (\o -> price o * quantity o) $
-    filter (\o -> shid o == shi) $
+    filter (\o -> brid o == bri) $
     queueBySide side ob
 
 
 creditLimitCheckForArrivingOrder :: Order -> MEState -> [Trade] -> MEState -> Bool
 creditLimitCheckForArrivingOrder o beforeTradeState ts afterTradeState = do
     bri `Map.member` credits && case side o of
-        Buy  -> creditInfo beforeTradeState Map.! bri >= creditSpentByBuyer bri ts + totalWorthInQueue Buy shi afterTrade
+        Buy  -> creditInfo beforeTradeState Map.! bri >= creditSpentByBuyer bri ts + totalWorthInQueue Buy bri afterTrade
         Sell -> True
   where
-    credits = creditInfo beforeTradeState
     bri = brid o
+    credits = creditInfo beforeTradeState
     afterTrade = orderBook afterTradeState
-    shi = shid o
 
 
 updateCreditInfo :: [Trade] -> MEState -> MEState
