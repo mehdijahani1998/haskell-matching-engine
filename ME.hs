@@ -319,8 +319,8 @@ replaceOrderInQueue :: OrderID -> Order -> OrderQueue -> OrderQueue
 replaceOrderInQueue _ _ [] = []
 
 replaceOrderInQueue ooid o (h:t)
-    | oid h == ooid = o:t
-    | otherwise     = h:t
+    | oid h == ooid = o:replaceOrderInQueue ooid o t
+    | otherwise     = h:replaceOrderInQueue ooid o t
 
 
 findOrderFromQueueByID :: OrderID -> OrderQueue -> Maybe Order
