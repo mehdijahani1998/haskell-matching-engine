@@ -18,5 +18,5 @@ decorateOnAccept stmt decorateByType handler rq s = do
     rs <- handler rq s
     case status rs of
         Accepted   -> decorateByType rq s rs
-        Eliminated -> decorateByType rq s rs
+        Eliminated -> rs `covers`  (stmt ++ "-AR")
         Rejected   -> rs `covers`  (stmt ++ "-AR")

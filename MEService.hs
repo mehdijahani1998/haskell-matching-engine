@@ -69,10 +69,10 @@ arrivingOrderDecoratorOnAccept rq@CancelOrderRq {} s _ = do
 
 newOrderHandler :: Handler
 newOrderHandler =
-    fillAndKillProc $
-    minQuantityCheck $
     creditLimitProc $
     ownershipCheck $
+    fillAndKillProc $
+    minQuantityCheck $
     pricebandCheck $
     arrivingOrderDecorator $
     validateOrder
