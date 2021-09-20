@@ -78,8 +78,8 @@ quantityInQueue o q =
 ownershipPreCheck :: Float -> Order -> Maybe Order -> MEState -> Bool
 ownershipPreCheck maxOwnershipPortion o oldOrder state = do
     shi `member` ownership && case side o of
-        Buy  -> (ownership!shi) + (quantity o) + (totalQuantity Buy shi ob) - (quantityInBook oldOrder ob) < maxOwnership
-        Sell -> (quantity o) + (totalQuantity Sell shi ob) - (quantityInBook oldOrder ob) <= (ownership!shi)
+        Buy  -> (ownership!shi) + (quantity o) + (totalQuantityInQueue Buy shi ob) - (quantityInBook oldOrder ob) < maxOwnership
+        Sell -> (quantity o) + (totalQuantityInQueue Sell shi ob) - (quantityInBook oldOrder ob) <= (ownership!shi)
   where
     shi = shid o
     ownership = ownershipInfo state
@@ -88,8 +88,8 @@ ownershipPreCheck maxOwnershipPortion o oldOrder state = do
     maxOwnership = floor $ fromIntegral shares * maxOwnershipPortion
 
 
-totalQuantity :: Side -> ShareholderID -> OrderBook -> Quantity
-totalQuantity side shi ob =
+totalQuantityInQueue :: Side -> ShareholderID -> OrderBook -> Quantity
+totalQuantityInQueue side shi ob =
     sum $
     Prelude.map quantity $
     Prelude.filter (\o -> shid o == shi) $
