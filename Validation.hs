@@ -132,15 +132,15 @@ validateOnReplaceDecorator _ _ rs =
 
 validateOnReplace :: PartialDecorator
 validateOnReplace rq s rs =
-    if prohibitMinQty o
+    if allowMinQty o
         then rs `covers` "VAL-Replace-1"
         else reject rq s `covers` "VAL-Replace-2"
   where
     o = order rq
 
 
-prohibitMinQty :: Order -> Bool
-prohibitMinQty order =
+allowMinQty :: Order -> Bool
+allowMinQty order =
     case m of
         Nothing -> True
         Just _ -> False
