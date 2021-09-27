@@ -78,12 +78,17 @@ quantityInQueue o q =
 ownershipPreCheck :: Float -> Order -> Maybe Order -> MEState -> Bool
 ownershipPreCheck maxOwnershipPortion o oldOrder state = do
     shi `member` ownership && case side o of
-        Buy  -> (ownership!shi) + (quantity o) + (totalQuantityInQueue Buy shi ob) - (quantityInBook oldOrder ob) < maxOwnership
-        Sell -> (quantity o) + (totalQuantityInQueue Sell shi ob) - (quantityInBook oldOrder ob) <= (ownership!shi)
+        Buy  -> ownedQty + newOrderQty + bookedBuyQty - bookedOrderQty < maxOwnership
+        Sell -> newOrderQty + bookedSellQty - bookedOrderQty <= ownedQty
   where
     shi = shid o
     ownership = ownershipInfo state
+    ownedQty = ownership!shi
     ob = orderBook state
+    newOrderQty = quantity o
+    bookedOrderQty = quantityInBook oldOrder ob
+    bookedBuyQty = totalQuantityInQueue Buy shi ob
+    bookedSellQty = totalQuantityInQueue Sell shi ob
     shares = totalShares state
     maxOwnership = floor $ fromIntegral shares * maxOwnershipPortion
 

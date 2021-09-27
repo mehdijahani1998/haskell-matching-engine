@@ -427,6 +427,7 @@ canBeMatchedWithOppositeQueueHead o h
     newp = price o
     headp = price h
 
+
 trade :: Price -> Quantity -> Order -> Order -> Trade
 trade p q newo oppositeo
     | side newo == Buy  = Trade p q newi headi newshi newbi headshi headbi
