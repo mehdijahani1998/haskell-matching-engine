@@ -186,63 +186,30 @@ data Response = NewOrderRs
     } deriving (Show, Eq)
 
 
-rejectedNewOrderRs :: MEState -> Response
-rejectedNewOrderRs = NewOrderRs Rejected []
-
-
-rejectedReplaceOrderRs :: MEState -> Response
-rejectedReplaceOrderRs = ReplaceOrderRs Rejected Nothing []
-
-
-rejectedCancelOrderRs :: MEState -> Response
-rejectedCancelOrderRs = CancelOrderRs Rejected Nothing
-
-
-rejectedSetCreditRs :: MEState -> Response
-rejectedSetCreditRs = SetCreditRs Rejected
-
-
-rejectedSetOwnershipRs :: MEState -> Response
-rejectedSetOwnershipRs = SetOwnershipRs Rejected
-
-
-rejectedSetReferencePriceRs :: MEState -> Response
-rejectedSetReferencePriceRs = SetReferencePriceRs Rejected
-
-
-rejectedSetTotalSharesRs :: MEState -> Response
-rejectedSetTotalSharesRs = SetTotalSharesRs Rejected
-
-rejectedSetStaticPriceBandLowerLimitRq :: MEState -> Response
-rejectedSetStaticPriceBandLowerLimitRq = SetStaticPriceBandLowerLimitRs Rejected
-
-rejectedSetStaticPriceBandUpperLimitRq :: MEState -> Response
-rejectedSetStaticPriceBandUpperLimitRq = SetStaticPriceBandUpperLimitRs Rejected
-
-rejectedSetOwnershipUpperLimitRq :: MEState -> Response
-rejectedSetOwnershipUpperLimitRq = SetOwnershipUpperLimitRs Rejected
-
-
 reject :: Request -> MEState -> Response
-reject NewOrderRq {} = rejectedNewOrderRs
+reject NewOrderRq {} = NewOrderRs Rejected []
 
-reject ReplaceOrderRq {} = rejectedReplaceOrderRs
+reject ReplaceOrderRq {} = ReplaceOrderRs Rejected Nothing []
 
-reject CancelOrderRq {} = rejectedCancelOrderRs
+reject CancelOrderRq {} = CancelOrderRs Rejected Nothing
 
-reject SetCreditRq {} = rejectedSetCreditRs
+reject SetCreditRq {} = SetCreditRs Rejected
 
-reject SetOwnershipRq {} = rejectedSetOwnershipRs
+reject SetOwnershipRq {} = SetOwnershipRs Rejected
 
-reject SetReferencePriceRq {} = rejectedSetReferencePriceRs
+reject SetReferencePriceRq {} = SetReferencePriceRs Rejected
 
-reject SetTotalSharesRq {} = rejectedSetTotalSharesRs
+reject SetTotalSharesRq {} = SetTotalSharesRs Rejected
 
-reject SetStaticPriceBandLowerLimitRq {} = rejectedSetStaticPriceBandLowerLimitRq
+reject SetStaticPriceBandLowerLimitRq {} = SetStaticPriceBandLowerLimitRs Rejected
 
-reject SetStaticPriceBandUpperLimitRq {} = rejectedSetStaticPriceBandUpperLimitRq
+reject SetStaticPriceBandUpperLimitRq {} = SetStaticPriceBandUpperLimitRs Rejected
 
-reject SetOwnershipUpperLimitRq {} = rejectedSetOwnershipUpperLimitRq
+reject SetOwnershipUpperLimitRq {} = SetOwnershipUpperLimitRs Rejected
+
+reject SetTickSizeRq {} = SetTickSizeRs Rejected
+
+reject SetLotSizeRq {} = SetLotSizeRs Rejected
 
 
 valueTraded :: Trade -> Int
