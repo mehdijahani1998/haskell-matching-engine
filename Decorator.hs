@@ -14,9 +14,9 @@ type PartialDecorator = Request -> MEState -> Response -> Coverage Response
 
 
 decorateOnAccept :: String -> PartialDecorator -> Decorator
-decorateOnAccept stmt decorateByType handler rq s = do
+decorateOnAccept stmtPrefix decorateByType handler rq s = do
     rs <- handler rq s
     case status rs of
         Accepted   -> decorateByType rq s rs
-        Eliminated -> rs `covers`  (stmt ++ "-AR")
-        Rejected   -> rs `covers`  (stmt ++ "-AR")
+        Eliminated -> rs `covers`  (stmtPrefix ++ "-AR")
+        Rejected   -> rs `covers`  (stmtPrefix ++ "-AR")

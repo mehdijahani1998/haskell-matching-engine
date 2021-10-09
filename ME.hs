@@ -79,7 +79,7 @@ data OrderBook = OrderBook
 
 
 data Trade = Trade
-  { priceTraded      :: Price
+    { priceTraded    :: Price
     , quantityTraded :: Quantity
     , buyId          :: OrderID
     , sellId         :: OrderID
@@ -302,7 +302,7 @@ applyOnQueue :: (OrderQueue -> OrderQueue) -> Side -> OrderBook -> OrderBook
 applyOnQueue f side (OrderBook bq sq)
     | side == Buy  = OrderBook (f bq) sq
     | side == Sell = OrderBook bq (f sq)
-    | otherwise = error "invalid Side"
+    | otherwise    = error "invalid Side"
 
 
 applyOnSameSideQueue :: (OrderQueue -> OrderQueue) -> Order -> OrderBook -> OrderBook
@@ -313,7 +313,7 @@ queueBySide :: Side -> OrderBook -> OrderQueue
 queueBySide side ob
     | side == Buy  = buyQueue ob
     | side == Sell = sellQueue ob
-    | otherwise = error "invalid Side"
+    | otherwise    = error "invalid Side"
 
 
 sameSideQueue :: Order -> OrderBook -> OrderQueue
@@ -324,8 +324,9 @@ oppositeSideQueue :: Order -> OrderBook -> OrderQueue
 oppositeSideQueue o = queueBySide os
   where
     os = case side o of
-        Buy  -> Sell
-        Sell -> Buy
+        Buy       -> Sell
+        Sell      -> Buy
+        otherwise -> error "invalid Side"
 
 
 removeOrderFromOrderBook :: Order -> OrderBook -> OrderBook
@@ -419,8 +420,8 @@ match o oq@(h:os)
         (Nothing, newQueue, [trade headp newq o h]) `covers` "M-3"
     | newq > headq = do
         newQueue <- enqueueRemainder os $ decQty h headq
-        (o', ob', ts') <- match (decQty o headq) newQueue
-        (o', ob', (trade headp headq o h):ts') `covers` "M-4"
+        (o', oq', ts') <- match (decQty o headq) newQueue
+        (o', oq', (trade headp headq o h):ts') `covers` "M-4"
   where
     newq = quantity o
     headp = price h
@@ -439,7 +440,8 @@ matchNewOrder o ob = do
     let oq = oppositeSideQueue o ob
     (remo, oq', ts) <- match o oq
     let ob' = updateOppositeQueueInBook o oq' ob
-    (enqueue remo ob', ts) `covers` "MNO"
+    let ob'' = enqueue remo ob'
+    (ob'', ts) `covers` "MNO"
 
 
 cancelOrder :: OrderID -> Side -> OrderBook -> Coverage (OrderBook, Maybe Order)
