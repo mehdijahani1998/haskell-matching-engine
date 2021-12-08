@@ -108,7 +108,7 @@ data MEState = MEState
 class CreditManagerState state where
     getCreditInfo :: state -> CreditInfo
     setCreditInfo :: state -> CreditInfo -> state
-    getOrderBook :: state -> OrderBook
+    getBrokerTotalWorthInQueue :: state -> Side -> BrokerID -> Int
 
 
 instance CreditManagerState MEState where
@@ -116,7 +116,15 @@ instance CreditManagerState MEState where
 
     setCreditInfo s c = s {creditInfo = c}
 
-    getOrderBook s = orderBook s
+    getBrokerTotalWorthInQueue s side brid = totalWorthInQueue side brid $ orderBook s
+
+
+totalWorthInQueue :: Side -> BrokerID -> OrderBook -> Int
+totalWorthInQueue side bri ob =
+    sum $
+    map (\o -> price o * quantity o) $
+    filter (\o -> brid o == bri) $
+    queueBySide side ob
 
 
 initMEState :: MEState
