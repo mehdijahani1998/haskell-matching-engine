@@ -13,6 +13,7 @@ module ME
     , OrderBook (..)
     , Trade (..)
     , MEState (..)
+    , CreditManagerState (..)
     , Request (..)
     , Response (..)
     , ResponseStatus (..)
@@ -102,6 +103,20 @@ data MEState = MEState
     , tickSize                  :: Price
     , lotSize                   :: Quantity
     } deriving (Show, Eq)
+
+
+class CreditManagerState state where
+    getCreditInfo :: state -> CreditInfo
+    setCreditInfo :: state -> CreditInfo -> state
+    getOrderBook :: state -> OrderBook
+
+
+instance CreditManagerState MEState where
+    getCreditInfo s = creditInfo s
+
+    setCreditInfo s c = s {creditInfo = c}
+
+    getOrderBook s = orderBook s
 
 
 initMEState :: MEState

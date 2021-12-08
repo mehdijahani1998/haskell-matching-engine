@@ -21,23 +21,23 @@ totalWorthInQueue side bri ob =
     queueBySide side ob
 
 
-creditLimitCheckForArrivingOrder :: Order -> MEState -> [Trade] -> MEState -> Bool
+creditLimitCheckForArrivingOrder :: CreditManagerState state => Order -> state -> [Trade] -> state -> Bool
 creditLimitCheckForArrivingOrder o beforeTradeState ts afterTradeState = do
     bri `Map.member` credits && case side o of
-        Buy  -> creditInfo beforeTradeState Map.! bri >= creditSpentByBuyer bri ts + totalWorthInQueue Buy bri afterTrade
+        Buy  -> getCreditInfo beforeTradeState Map.! bri >= creditSpentByBuyer bri ts + totalWorthInQueue Buy bri afterTrade
         Sell -> True
   where
     bri = brid o
-    credits = creditInfo beforeTradeState
-    afterTrade = orderBook afterTradeState
+    credits = getCreditInfo beforeTradeState
+    afterTrade = getOrderBook afterTradeState
 
 
-updateCreditInfo :: [Trade] -> MEState -> MEState
+updateCreditInfo :: CreditManagerState state => [Trade] -> state -> state
 updateCreditInfo ts s =
     foldl updateCreditByTrade s ts
 
 
-updateCreditByTrade :: MEState -> Trade -> MEState
+updateCreditByTrade :: CreditManagerState state => state -> Trade -> state
 updateCreditByTrade s t =
     s''
   where
@@ -45,21 +45,21 @@ updateCreditByTrade s t =
     s'' = updateBuyerCreditByTrade s' t
 
 
-updateBuyerCreditByTrade :: MEState -> Trade -> MEState
+updateBuyerCreditByTrade :: CreditManagerState state => state -> Trade -> state
 updateBuyerCreditByTrade state t =
-    state {creditInfo = Map.insert bid newCredit ci}
+    setCreditInfo state $ Map.insert bid newCredit ci
   where
     bid = buyerBrId t
-    ci = creditInfo state
+    ci = getCreditInfo state
     newCredit = ci Map.! bid - valueTraded t
 
 
-updateSellerCreditByTrade :: MEState -> Trade -> MEState
+updateSellerCreditByTrade :: CreditManagerState state => state -> Trade -> state
 updateSellerCreditByTrade state t =
-    state {creditInfo = Map.insert sid newCredit ci}
+    setCreditInfo state $ Map.insert sid newCredit ci
   where
     sid = sellerBrId t
-    ci = creditInfo state
+    ci = getCreditInfo state
     newCredit = ci Map.! sid + valueTraded t
 
 
