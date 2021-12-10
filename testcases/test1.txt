@@ -1,6 +1,6 @@
-SetTickSizeRq   1
-SetLotSizeRq   1
-SetReferencePriceRq   10
+SetTickSizeRq	1
+SetLotSizeRq	1
+SetReferencePriceRq	10
 SetStaticPriceBandLowerLimitRq	0.9
 SetStaticPriceBandUpperLimitRq	0.9
 SetTotalSharesRq	100
