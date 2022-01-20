@@ -53,9 +53,9 @@ executable RandomTest
   main-is:             RandomTest.hs
 
   -- Modules included in this executable, other than Main.
-  other-modules:       Coverage CreditLimit FillAndKill ME MEService MinQuantity Ownership PriceBand Shahlaa Decorator Validation
+  other-modules:       Coverage CreditLimit FillAndKill ME MEService MinQuantity Ownership PriceBand Shahlaa Decorator Validation OrderHandler Printer
 
-  hs-source-dirs:      . infra decorators
+  hs-source-dirs:      . infra decorators domain
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    ExplicitForAll
@@ -75,9 +75,9 @@ executable GetTCTraces
   main-is:             GetTCTraces.hs
 
   -- Modules included in this executable, other than Main.
-  other-modules:       Coverage CreditLimit FillAndKill ME MEService MinQuantity Ownership PriceBand Shahlaa Decorator Validation
+  other-modules:       Coverage CreditLimit FillAndKill ME MEService MinQuantity Ownership PriceBand Shahlaa Decorator Validation OrderHandler Parser Printer
 
-  hs-source-dirs:      . infra decorators
+  hs-source-dirs:      . infra decorators domain
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    ExplicitForAll
@@ -97,9 +97,9 @@ executable AllB1Sn
   main-is:             AllB1Sn.hs
 
   -- Modules included in this executable, other than Main.
-  other-modules:       Coverage CreditLimit FillAndKill ME MEService MinQuantity Ownership PriceBand Shahlaa Decorator Validation
+  other-modules:       Coverage CreditLimit FillAndKill ME MEService MinQuantity Ownership PriceBand Shahlaa Decorator Validation OrderHandler Printer
 
-  hs-source-dirs:      . infra decorators
+  hs-source-dirs:      . infra decorators domain
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    ExplicitForAll

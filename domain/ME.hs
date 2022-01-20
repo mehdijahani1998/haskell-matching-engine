@@ -19,22 +19,28 @@ module ME
     , initMEState
     , limitOrder
     , icebergOrder
+    , trade
     , removeOrderFromOrderBook
     , valueTraded
-    , matchNewOrder
-    , cancelOrder
-    , adjustPeakSizeOnReplace
-    , shouldReplaceInPlace
-    , replaceOrderInPlace
     , queueBySide
     , sameSideQueue
     , reject
+    , decQty
+    , displayedQty
+    , oppositeSideQueue
+    , updateOppositeQueueInBook
+    , enqueue
+    , findOrderFromOrderBookByID
+    , setVisibleQty
+    , enqueueOrder
+    , replaceOrderInPlace
     ) where
 
 import           Control.Exception (assert)
-import           Coverage
 import qualified Data.List         as List
 import qualified Data.Map          as Map
+
+import           Coverage
 
 
 type Quantity = Int
@@ -368,34 +374,6 @@ enqueue Nothing {} = id
 enqueue (Just o)   = applyOnSameSideQueue (enqueueOrder o) o
 
 
-enqueueRemainder :: OrderQueue -> Order -> Coverage OrderQueue
-enqueueRemainder os o@LimitOrder {}
-    | q == 0 = os `covers` "ELR-1"
-    | otherwise = enqueueOrder o os `covers` "ELR-2"
-  where
-    q = quantity o
-
-enqueueRemainder os o@IcebergOrder {}
-    | q == 0 = os `covers` "EIR-1"
-    | vq == 0 && q <= dq = enqueueOrder (setVisibleQty o q) os `covers` "EIR-2"
-    | vq == 0 && q > dq = enqueueOrder (setVisibleQty o dq) os `covers` "EIR-3"
-    | otherwise = enqueueOrder o os `covers` "EIR-4"
-  where
-    q = quantity o
-    vq = visibleQty o
-    dq = disclosedQty o
-
-
-canBeMatchedWithOppositeQueueHead :: Order -> Order -> Bool
-canBeMatchedWithOppositeQueueHead o h
-    | s == Buy  = newp >= headp
-    | s == Sell = newp <= headp
-  where
-    s = side o
-    newp = price o
-    headp = price h
-
-
 trade :: Price -> Quantity -> Order -> Order -> Trade
 trade p q newo oppositeo
     | side newo == Buy  = Trade p q newi headi newshi newbi headshi headbi
@@ -409,25 +387,6 @@ trade p q newo oppositeo
     headbi = brid oppositeo
 
 
-match :: Order -> OrderQueue -> Coverage (Maybe Order, OrderQueue, [Trade])
-match o [] = (Just o, [], []) `covers` "M-0"
-
-match o oq@(h:os)
-    | not $ canBeMatchedWithOppositeQueueHead o h = (Just o, oq, []) `covers` "M-1"
-    | newq < headq = (Nothing, (decQty h newq):os, [trade headp newq o h]) `covers` "M-2"
-    | newq == headq = do
-        newQueue <- enqueueRemainder os $ decQty h newq
-        (Nothing, newQueue, [trade headp newq o h]) `covers` "M-3"
-    | newq > headq = do
-        newQueue <- enqueueRemainder os $ decQty h headq
-        (o', oq', ts') <- match (decQty o headq) newQueue
-        (o', oq', (trade headp headq o h):ts') `covers` "M-4"
-  where
-    newq = quantity o
-    headp = price h
-    headq = displayedQty h
-
-
 updateOppositeQueueInBook :: Order -> OrderQueue -> OrderBook -> OrderBook
 updateOppositeQueueInBook o oq ob
     | side o == Buy  = ob{sellQueue = oq}
@@ -435,45 +394,5 @@ updateOppositeQueueInBook o oq ob
     | otherwise = error "invalid Side"
 
 
-matchNewOrder :: Order -> OrderBook -> Coverage (OrderBook, [Trade])
-matchNewOrder o ob = do
-    let oq = oppositeSideQueue o ob
-    (remo, oq', ts) <- match o oq
-    let ob' = updateOppositeQueueInBook o oq' ob
-    let ob'' = enqueue remo ob'
-    (ob'', ts) `covers` "MNO"
-
-
-cancelOrder :: OrderID -> Side -> OrderBook -> Coverage (OrderBook, Maybe Order)
-cancelOrder oid side ob = do
-    case findOrderFromOrderBookByID oid side ob of
-        Just o -> (ob', Just o) `covers` "CO-1"
-          where
-            ob' = removeOrderFromOrderBook o ob
-        Nothing -> (ob, Nothing) `covers` "CO-2"
-
-
 replaceOrderInPlace :: OrderID -> Order -> OrderBook -> Coverage (OrderBook, [Trade])
 replaceOrderInPlace ooid o ob = (replaceOrderInOrderBook ooid o ob, []) `covers` "ROIP-1"
-
-
-shouldReplaceInPlace :: Order -> Order -> Bool
-shouldReplaceInPlace oldOrder order
-    | displayedQty order > displayedQty oldOrder = False
-    | price order /= price oldOrder = False
-    | otherwise = True
-
-
-adjustPeakSizeOnReplace :: Order -> Order -> Order
-adjustPeakSizeOnReplace oldOrder@LimitOrder {} notAdjustedNewOrder = notAdjustedNewOrder
-
-adjustPeakSizeOnReplace oldOrder@IcebergOrder {} notAdjustedNewOrder@LimitOrder {} = notAdjustedNewOrder
-
-adjustPeakSizeOnReplace oldOrder@IcebergOrder {} notAdjustedNewOrder@IcebergOrder {}
-    | oldvq == olddq = setVisibleQty notAdjustedNewOrder newdq
-    | oldvq < olddq && oldvq > newdq = setVisibleQty notAdjustedNewOrder newdq
-    | otherwise = notAdjustedNewOrder
-  where
-    olddq = disclosedQty oldOrder
-    newdq = disclosedQty notAdjustedNewOrder
-    oldvq = visibleQty oldOrder
