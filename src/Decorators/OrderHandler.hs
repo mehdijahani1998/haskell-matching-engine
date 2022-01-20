@@ -1,11 +1,11 @@
-module OrderHandler (orderHandlerDecorator) where
+module Decorators.OrderHandler (orderHandlerDecorator) where
 
 import           Data.Maybe
 
-import           Coverage
-import           Decorator
-import           ME
-import           Validation
+import           Decorators.Validation
+import           Domain.ME
+import           Infra.Coverage
+import           Infra.Decorator
 
 
 newOrderMatcher :: Handler

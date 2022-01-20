@@ -1,4 +1,4 @@
-module ME
+module Domain.ME
     ( Order (..)
     , Quantity
     , Price

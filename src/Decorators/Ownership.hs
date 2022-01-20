@@ -1,9 +1,10 @@
-module Ownership (ownershipCheck) where
+module Decorators.Ownership (ownershipCheck) where
 
-import           Coverage
 import           Data.Map
-import           Decorator
-import           ME
+
+import           Domain.ME
+import           Infra.Coverage
+import           Infra.Decorator
 
 
 ownershipCheck :: Decorator

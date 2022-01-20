@@ -1,11 +1,12 @@
 module Main where
 import qualified Data.Map      as Map
 import qualified Data.Set      as Set
-import           ME
-import           MEService
-import           Shahlaa
 import           System.Random
 import           Text.Printf
+
+import           Domain.ME
+import           Domain.MEService
+import           Infra.Shahlaa
 
 
 data TCGenSpec = TCGenSpec

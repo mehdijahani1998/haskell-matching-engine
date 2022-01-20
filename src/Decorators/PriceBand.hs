@@ -1,8 +1,8 @@
-module PriceBand (pricebandCheck) where
+module Decorators.PriceBand (pricebandCheck) where
 
-import           Coverage
-import           Decorator
-import           ME
+import           Domain.ME
+import           Infra.Coverage
+import           Infra.Decorator
 
 
 pricebandCheck :: Decorator

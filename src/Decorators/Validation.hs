@@ -1,11 +1,11 @@
-module Validation
+module Decorators.Validation
     ( validateOrder
     , postponedCheckOnReplace
     ) where
 
-import           Coverage
-import           Decorator
-import           ME
+import           Domain.ME
+import           Infra.Coverage
+import           Infra.Decorator
 
 
 validateOrder :: Decorator

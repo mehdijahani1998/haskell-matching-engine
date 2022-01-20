@@ -1,4 +1,4 @@
-module Shahlaa
+module Infra.Shahlaa
     ( addOracle
     , coverage
     , fTestCase
@@ -7,14 +7,14 @@ module Shahlaa
     ) where
 
 import           Control.Monad.Trans.State
-import           Coverage
 import qualified Data.Map                  as Map
 import qualified Data.Set                  as Set
 import           Text.Printf
 
-import           ME
-import           MEService
-import           Printer
+import           Domain.ME
+import           Domain.MEService
+import           Domain.Printer
+import           Infra.Coverage
 
 
 data TestCase = TestCase
@@ -36,7 +36,7 @@ handleRequest (s, rss, covs) rq =
     (s', rss ++ [rs], covs ++ [cov])
   where
     (rs, cov) = runState (requestHandler rq s) emptyCoverage
-    s' = ME.state rs
+    s' = Domain.ME.state rs
 
 
 addOracle :: [Request] -> TestCase

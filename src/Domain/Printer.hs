@@ -1,4 +1,4 @@
-module Printer
+module Domain.Printer
     ( fRequest
     , fResponse
     ) where
@@ -6,7 +6,7 @@ module Printer
 import qualified Data.Map    as Map
 import           Text.Printf
 
-import           ME
+import           Domain.ME
 
 
 fRequest :: Request -> String

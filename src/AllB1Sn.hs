@@ -2,12 +2,13 @@ module Main where
 import           Control.Monad
 import           Control.Monad.Trans.State
 import qualified Data.Set                  as Set
-import           ME
-import           Shahlaa
 import           System.Environment
 import           System.IO
 import           System.Random
 import           Text.Printf
+
+import           Domain.ME
+import           Infra.Shahlaa
 
 
 wellFormed :: Side -> OrderQueue -> Bool

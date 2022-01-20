@@ -1,8 +1,8 @@
-module MinQuantity (minQuantityCheck) where
+module Decorators.MinQuantity (minQuantityCheck) where
 
-import           Coverage
-import           Decorator
-import           ME
+import           Domain.ME
+import           Infra.Coverage
+import           Infra.Decorator
 
 
 minQuantityCheck :: Decorator

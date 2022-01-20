@@ -3,8 +3,8 @@ import           System.Environment
 import           System.Exit
 import           System.IO
 
-import           Parser
-import           Shahlaa
+import           Domain.Parser
+import           Infra.Shahlaa
 
 
 main :: IO()

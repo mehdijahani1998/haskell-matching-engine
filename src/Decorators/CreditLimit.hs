@@ -1,9 +1,10 @@
-module CreditLimit (creditLimitProc) where
+module Decorators.CreditLimit (creditLimitProc) where
 
-import           Coverage
-import qualified Data.Map  as Map
-import           Decorator
-import           ME
+import qualified Data.Map        as Map
+
+import           Domain.ME
+import           Infra.Coverage
+import           Infra.Decorator
 
 
 creditSpentByBuyer :: BrokerID -> [Trade] -> Int

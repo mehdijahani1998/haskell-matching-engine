@@ -1,8 +1,8 @@
-module FillAndKill (fillAndKillProc) where
+module Decorators.FillAndKill (fillAndKillProc) where
 
-import           Coverage
-import           Decorator
-import           ME
+import           Domain.ME
+import           Infra.Coverage
+import           Infra.Decorator
 
 
 removeOrderFromState :: Order -> MEState -> MEState

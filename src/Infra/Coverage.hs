@@ -1,4 +1,4 @@
-module Coverage
+module Infra.Coverage
     ( Coverage
     , CoverageInfo
     , CoverageItem

@@ -1,12 +1,12 @@
-module Decorator
+module Infra.Decorator
     ( Handler
     , Decorator
     , PartialDecorator
     , decorateOnAccept
     ) where
 
-import           Coverage
-import           ME
+import           Domain.ME
+import           Infra.Coverage
 
 type Handler = Request -> MEState -> Coverage Response
 type Decorator = Handler -> Handler

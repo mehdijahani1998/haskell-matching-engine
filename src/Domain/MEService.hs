@@ -1,17 +1,17 @@
-module MEService (requestHandler) where
+module Domain.MEService (requestHandler) where
 
 import           Data.Map
 
-import           Coverage
-import           CreditLimit
-import           Decorator
-import           FillAndKill
-import           ME
-import           MinQuantity
-import           OrderHandler
-import           Ownership
-import           PriceBand
-import           Validation
+import           Decorators.CreditLimit
+import           Decorators.FillAndKill
+import           Decorators.MinQuantity
+import           Decorators.OrderHandler
+import           Decorators.Ownership
+import           Decorators.PriceBand
+import           Decorators.Validation
+import           Domain.ME
+import           Infra.Coverage
+import           Infra.Decorator
 
 
 handlerSeed :: Handler

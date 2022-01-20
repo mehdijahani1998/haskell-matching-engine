@@ -1,9 +1,9 @@
-module Parser
+module Domain.Parser
     ( genRequest
     , indexRequests
     ) where
 
-import           ME
+import           Domain.ME
 
 
 genRequest :: OrderID -> [String] -> Request
