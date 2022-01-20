@@ -55,6 +55,8 @@ executable RandomTest
   -- Modules included in this executable, other than Main.
   other-modules:       Coverage CreditLimit FillAndKill ME MEService MinQuantity Ownership PriceBand Shahlaa Decorator Validation
 
+  hs-source-dirs:      . infra decorators
+
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    ExplicitForAll
 
@@ -75,6 +77,8 @@ executable GetTCTraces
   -- Modules included in this executable, other than Main.
   other-modules:       Coverage CreditLimit FillAndKill ME MEService MinQuantity Ownership PriceBand Shahlaa Decorator Validation
 
+  hs-source-dirs:      . infra decorators
+
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    ExplicitForAll
 
@@ -94,6 +98,8 @@ executable AllB1Sn
 
   -- Modules included in this executable, other than Main.
   other-modules:       Coverage CreditLimit FillAndKill ME MEService MinQuantity Ownership PriceBand Shahlaa Decorator Validation
+
+  hs-source-dirs:      . infra decorators
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    ExplicitForAll
