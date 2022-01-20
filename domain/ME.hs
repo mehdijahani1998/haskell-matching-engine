@@ -40,8 +40,6 @@ import           Control.Exception (assert)
 import qualified Data.List         as List
 import qualified Data.Map          as Map
 
-import           Coverage
-
 
 type Quantity = Int
 type Price = Int
@@ -394,5 +392,5 @@ updateOppositeQueueInBook o oq ob
     | otherwise = error "invalid Side"
 
 
-replaceOrderInPlace :: OrderID -> Order -> OrderBook -> Coverage (OrderBook, [Trade])
-replaceOrderInPlace ooid o ob = (replaceOrderInOrderBook ooid o ob, []) `covers` "ROIP-1"
+replaceOrderInPlace :: OrderID -> Order -> OrderBook -> (OrderBook, [Trade])
+replaceOrderInPlace ooid o ob = (replaceOrderInOrderBook ooid o ob, [])

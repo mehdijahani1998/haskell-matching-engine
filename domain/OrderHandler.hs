@@ -33,9 +33,13 @@ orderReplacer rq@(ReplaceOrderRq oldoid oNotAdjusted) s = do
             if postponedCheckOnReplace oldOrder oNotAdjusted
                 then do
                     let o = adjustPeakSizeOnReplace oldOrder oNotAdjusted
-                    (ob'', ts) <- if shouldReplaceInPlace oldOrder o then replaceOrderInPlace (oid oldOrder) o ob else matchNewOrder o ob'
+                    (ob'', ts) <- if shouldSubstituteOrder oldOrder o then substituteOrder (oid oldOrder) o ob else matchNewOrder o ob'
                     return (ReplaceOrderRs Accepted oldo ts s { orderBook = ob''})
                 else return $ reject rq s
+
+
+substituteOrder :: OrderID -> Order -> OrderBook -> Coverage (OrderBook, [Trade])
+substituteOrder ooid o ob = (replaceOrderInPlace ooid o ob) `covers` "ROIP-1"
 
 
 orderHandlerDecorator :: Decorator
@@ -101,8 +105,8 @@ cancelOrder oid side ob = do
         Nothing -> (ob, Nothing) `covers` "CO-2"
 
 
-shouldReplaceInPlace :: Order -> Order -> Bool
-shouldReplaceInPlace oldOrder order
+shouldSubstituteOrder :: Order -> Order -> Bool
+shouldSubstituteOrder oldOrder order
     | displayedQty order > displayedQty oldOrder = False
     | price order /= price oldOrder = False
     | otherwise = True
