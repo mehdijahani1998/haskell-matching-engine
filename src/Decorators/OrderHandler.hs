@@ -70,7 +70,6 @@ canBeMatchedWithOppositeQueueHead o h
 
 match :: Order -> OrderQueue -> Coverage (Maybe Order, OrderQueue, [Trade])
 match o [] = (Just o, [], []) `covers` "M-0"
-
 match o oq@(h:os)
     | not $ canBeMatchedWithOppositeQueueHead o h = (Just o, oq, []) `covers` "M-1"
     | newq < headq = (Nothing, (decQty h newq):os, [trade headp newq o h]) `covers` "M-2"
@@ -86,6 +85,24 @@ match o oq@(h:os)
     headp = price h
     headq = displayedQty h
 
+match' :: Order -> OrderQueue -> (Maybe Order, OrderQueue, [Trade])
+match' o [] = (Just o, [], []) 
+match' o oq@(h:os)
+    | not $ canBeMatchedWithOppositeQueueHead o h = (Just o, oq, []) 
+    | newq < headq = (Nothing, (decQty h newq):os, [trade headp newq o h]) 
+    | newq == headq = do
+        newQueue <- enqueueRemainder' os $ decQty h newq
+        (Nothing, newQueue, [trade headp newq o h]) 
+    | newq > headq = do
+        newQueue <- enqueueRemainder' os $ decQty h headq
+        (o', oq', ts') <- match' (decQty o headq) newQueue
+        (o', oq', (trade headp headq o h):ts') 
+  where
+    newq = quantity o
+    headp = price h
+    headq = displayedQty h
+
+
 
 matchNewOrder :: Order -> OrderBook -> Coverage (OrderBook, [Trade])
 matchNewOrder o ob = do
@@ -95,6 +112,13 @@ matchNewOrder o ob = do
     let ob'' = enqueue remo ob'
     (ob'', ts) `covers` "MNO"
 
+matchNewOrder' :: Order -> OrderBook -> (OrderBook, [Trade])
+matchNewOrder' o ob = do
+    let oq = oppositeSideQueue o ob
+    (remo, oq', ts) <- match' o oq
+    let ob' = updateOppositeQueueInBook o oq' ob
+    let ob'' = enqueue remo ob'
+    (ob'', ts)
 
 cancelOrder :: OrderID -> Side -> OrderBook -> Coverage (OrderBook, Maybe Order)
 cancelOrder oid side ob = do
@@ -139,6 +163,23 @@ enqueueRemainder os o@IcebergOrder {}
     | vq == 0 && q <= dq = enqueueOrder (setVisibleQty o q) os `covers` "EIR-2"
     | vq == 0 && q > dq = enqueueOrder (setVisibleQty o dq) os `covers` "EIR-3"
     | otherwise = enqueueOrder o os `covers` "EIR-4"
+  where
+    q = quantity o
+    vq = visibleQty o
+    dq = disclosedQty o
+
+enqueueRemainder' :: OrderQueue -> Order -> OrderQueue
+enqueueRemainder' os o@LimitOrder {}
+    | q == 0 = os 
+    | otherwise = enqueueOrder o os 
+  where
+    q = quantity o
+
+enqueueRemainder' os o@IcebergOrder {}
+    | q == 0 = os 
+    | vq == 0 && q <= dq = enqueueOrder (setVisibleQty o q) os 
+    | vq == 0 && q > dq = enqueueOrder (setVisibleQty o dq) os 
+    | otherwise = enqueueOrder o os 
   where
     q = quantity o
     vq = visibleQty o

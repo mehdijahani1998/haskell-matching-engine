@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-cabal build GetTCTraces &&
+cabal v2-build GetTCTraces && cd /home/aamer/Documents/University/BSc-Project/haskell-matching-engine/dist-newstyle/build/x86_64-linux/ghc-8.6.5/me-haskell-0.1.0.0/x/GetTCTraces/build/GetTCTraces &&
 ./GetTCTraces --trades testcases/test1.txt > testcases/sink &&
-diff -1 testcases/test1_res.txt testcases/sink | colordiff | diff-highlight
+diff -1 testcases/test1_res.txt testcases/sink
