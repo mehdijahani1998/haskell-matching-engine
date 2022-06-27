@@ -115,7 +115,7 @@ matchNewOrder o ob = do
 matchNewOrder' :: Order -> OrderBook -> (OrderBook, [Trade])
 matchNewOrder' o ob = do
     let oq = oppositeSideQueue o ob
-    (remo, oq', ts) <- match' o oq
+    let (remo, oq', ts) = match' o oq
     let ob' = updateOppositeQueueInBook o oq' ob
     let ob'' = enqueue remo ob'
     (ob'', ts)
