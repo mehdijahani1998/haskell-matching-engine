@@ -91,11 +91,11 @@ match' o oq@(h:os)
     | not $ canBeMatchedWithOppositeQueueHead o h = (Just o, oq, []) 
     | newq < headq = (Nothing, (decQty h newq):os, [trade headp newq o h]) 
     | newq == headq = do
-        newQueue <- enqueueRemainder' os $ decQty h newq
+        let newQueue = enqueueRemainder' os $ decQty h newq
         (Nothing, newQueue, [trade headp newq o h]) 
     | newq > headq = do
-        newQueue <- enqueueRemainder' os $ decQty h headq
-        (o', oq', ts') <- match' (decQty o headq) newQueue
+        let newQueue = enqueueRemainder' os $ decQty h headq
+        let (o', oq', ts') = match' (decQty o headq) newQueue
         (o', oq', (trade headp headq o h):ts') 
   where
     newq = quantity o
