@@ -1,4 +1,4 @@
-module Decorators.OrderHandler (orderHandlerDecorator) where
+module Decorators.OrderHandler (orderHandlerDecorator, matchNewOrder') where
 
 import           Data.Maybe
 

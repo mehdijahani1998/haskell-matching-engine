@@ -5,7 +5,7 @@ import           Data.Map
 import           Decorators.CreditLimit
 import           Decorators.FillAndKill
 import           Decorators.MinQuantity
-import           Decorators.OrderHandler
+import Decorators.OrderHandler ( orderHandlerDecorator )
 import           Decorators.Ownership
 import           Decorators.PriceBand
 import           Decorators.Validation
