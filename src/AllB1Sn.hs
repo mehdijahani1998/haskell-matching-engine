@@ -4,13 +4,14 @@ module Main where
 import Domain.ME
     ( Trade(Trade, priceTraded, quantityTraded),
       OrderBook(OrderBook, buyQueue, sellQueue),
-      Order(LimitOrder, quantity, fillAndKill, minQty),
+      Order(LimitOrder, quantity, fillAndKill, minQty, side, shid, price),
       Side(..),
       Quantity,
-      valueTraded, OrderQueue, MEState (orderBook), OrderID, ShareholderID, BrokerID, Price )
+      valueTraded, OrderQueue, MEState (orderBook), OrderID, ShareholderID, BrokerID, Price,
+      limitOrder )
 import Domain.MEService
 import Test.QuickCheck
-import Decorators.OrderHandler (matchNewOrder')
+import Decorators.OrderHandler (matchNewOrder', matchNewOrder)
 
 
 -- instance Arbitrary Side where
@@ -53,9 +54,10 @@ genPrice = elements list
     where list = [a | a <- [1..1000]]
 
 genOnlyBuyOrder :: Gen Order
-genOnlyBuyOrder = do Positive oid <- arbitrary
-                     Positive brid <- arbitrary
-                     Positive shid <- arbitrary
+genOnlyBuyOrder = do --Positive oid <- arbitrary
+                     --Positive brid <- arbitrary
+                     --Positive shid <- arbitrary
+                     (oid, brid, shid) <- genIDs
                      price <- genPrice
                      buySide <- genOnlyBuySide
                      (quantity , minQty) <- genQtyandMinQty
@@ -63,19 +65,21 @@ genOnlyBuyOrder = do Positive oid <- arbitrary
                      return (LimitOrder oid brid shid price quantity buySide minQty fillAndKill)
 
 genOnlySellOrder :: Gen Order
-genOnlySellOrder = do Positive oid <- arbitrary
-                      Positive brid <- arbitrary
-                      Positive shid <- arbitrary
+genOnlySellOrder = do --Positive oid <- arbitrary
+                      --Positive brid <- arbitrary
+                      --Positive shid <- arbitrary
+                      (oid, brid, shid) <- genIDs
                       price <- genPrice
                       sellSide <- genOnlySellSide
                       (quantity , minQty) <- genQtyandMinQty
                       fillAndKill <- genFillAndKill
                       return (LimitOrder oid brid shid price quantity sellSide minQty fillAndKill)
 
-genRandomOrder :: Gen Order 
-genRandomOrder = do Positive oid <- arbitrary
-                    Positive brid <- arbitrary
-                    Positive shid <- arbitrary
+genRandomOrder :: Gen Order
+genRandomOrder = do --Positive oid <- arbitrary
+                    --Positive brid <- arbitrary
+                    --Positive shid <- arbitrary
+                    (oid, brid, shid) <- genIDs
                     price <- genPrice
                     side <- genBothSides
                     (quantity , minQty) <- genQtyandMinQty
@@ -91,7 +95,7 @@ genSellQueue = listOf genOnlySellOrder
 genOrderBook :: Gen OrderBook
 genOrderBook = do buyQ <- genBuyQueue
                   sellQ <- genSellQueue
-                  return (OrderBook buyQ sellQ) 
+                  return (OrderBook buyQ sellQ)
 
 
 instance Arbitrary Trade where
@@ -148,6 +152,27 @@ prop_dummyQuantity_check newOrder = Just (quantity newOrder) >= minQty newOrder
 
 prop_dummyQuantity_check2 :: OrderBook -> Bool
 prop_dummyQuantity_check2 orderBook = not (any prop_dummyQuantity_check (buyQueue orderBook))
+
+-- tradesPriceLessThanOrder :: Order -> OrderBook -> Bool
+-- tradesPriceLessThanOrder newOrder orderBook = 
+--     where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
+--           trades_prices = [priceTraded trd | trd <- trades, ]
+
+canOrdersBeMatched :: Order -> Order -> Bool
+canOrdersBeMatched bord sord
+    | side bord == side sord = False
+    | shid bord /= shid sord = False
+    | price bord < price sord = False
+    | otherwise = True
+
+canHeadsMatch :: Order -> OrderBook -> Bool
+canHeadsMatch newOrder orderBook = not $ canOrdersBeMatched buyHead sellHead
+    where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
+          buyHead = head $ buyQueue remainOrderBook
+          sellHead = head $ sellQueue remainOrderBook
+
+prop_canHeadsMatch :: Order -> OrderBook -> Property
+prop_canHeadsMatch newOrder orderBook = orderBookNotNull orderBook ==> canHeadsMatch newOrder orderBook
 
 
 main :: IO()
