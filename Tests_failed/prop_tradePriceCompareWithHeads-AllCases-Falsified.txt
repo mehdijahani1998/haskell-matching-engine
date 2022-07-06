@@ -1,0 +1,48 @@
+*Main> quickCheck prop_tradePriceCompareWithHeads1
+*** Failed! Falsified (after 1 test):  
+LimitOrder {oid = 9, brid = 6, shid = 1, price = 909, quantity = 874, side = Sell, minQty = Just 768, fillAndKill = False}
+OrderBook {buyQueue = [LimitOrder {oid = 2, brid = 10, shid = 1, price = 140, quantity = 225, side = Buy, minQty = Just 203, fillAndKill = False}], sellQueue = [LimitOrder {oid = 8, brid = 4, shid = 6, price = 897, quantity = 297, side = Sell, minQty = Just 71, fillAndKill = False}]}
+
+*Main> quickCheck prop_tradePriceCompareWithHeads1
+*** Failed! Falsified (after 1 test):  
+LimitOrder {oid = 8, brid = 6, shid = 9, price = 821, quantity = 704, side = Sell, minQty = Just 487, fillAndKill = False}
+OrderBook {buyQueue = [LimitOrder {oid = 8, brid = 7, shid = 7, price = 850, quantity = 792, side = Buy, minQty = Just 537, fillAndKill = False}], sellQueue = [LimitOrder {oid = 8, brid = 5, shid = 1, price = 948, quantity = 963, side = Sell, minQty = Just 7, fillAndKill = False}]}
+
+
+
+*Main> quickCheck prop_tradePriceCompareWithHeads2
+*** Failed! Falsified (after 2 tests):  
+LimitOrder {oid = 10, brid = 8, shid = 7, price = 595, quantity = 572, side = Sell, minQty = Just 214, fillAndKill = False}
+OrderBook {buyQueue = [LimitOrder {oid = 9, brid = 10, shid = 8, price = 949, quantity = 577, side = Buy, minQty = Just 535, fillAndKill = False}], sellQueue = [LimitOrder {oid = 2, brid = 6, shid = 6, price = 940, quantity = 740, side = Sell, minQty = Just 377, fillAndKill = False}]}
+
+
+*Main> quickCheck prop_tradePriceCompareWithHeads2
+*** Failed! Falsified (after 2 tests):  
+LimitOrder {oid = 1, brid = 3, shid = 7, price = 86, quantity = 911, side = Sell, minQty = Just 102, fillAndKill = False}
+OrderBook {buyQueue = [LimitOrder {oid = 5, brid = 5, shid = 8, price = 289, quantity = 846, side = Buy, minQty = Just 41, fillAndKill = False}], sellQueue = [LimitOrder {oid = 3, brid = 2, shid = 7, price = 767, quantity = 469, side = Sell, minQty = Just 224, fillAndKill = False}]}
+
+
+
+
+*Main> quickCheck prop_tradePriceCompareWithHeads3
+*** Failed! Falsified (after 1 test):  
+LimitOrder {oid = 7, brid = 10, shid = 7, price = 352, quantity = 807, side = Buy, minQty = Just 560, fillAndKill = False}
+OrderBook {buyQueue = [LimitOrder {oid = 6, brid = 1, shid = 9, price = 65, quantity = 877, side = Buy, minQty = Just 231, fillAndKill = False}], sellQueue = [LimitOrder {oid = 4, brid = 5, shid = 10, price = 836, quantity = 543, side = Sell, minQty = Just 117, fillAndKill = False}]}
+
+
+*Main> quickCheck prop_tradePriceCompareWithHeads3
+*** Failed! Falsified (after 1 test):  
+LimitOrder {oid = 6, brid = 8, shid = 8, price = 60, quantity = 583, side = Sell, minQty = Just 51, fillAndKill = False}
+OrderBook {buyQueue = [LimitOrder {oid = 10, brid = 6, shid = 1, price = 179, quantity = 387, side = Buy, minQty = Just 300, fillAndKill = False}], sellQueue = [LimitOrder {oid = 2, brid = 2, shid = 3, price = 598, quantity = 887, side = Sell, minQty = Just 706, fillAndKill = False}]}
+
+
+
+*Main> quickCheck prop_tradePriceCompareWithHeads4
+*** Failed! Falsified (after 1 test):  
+LimitOrder {oid = 9, brid = 3, shid = 2, price = 113, quantity = 362, side = Buy, minQty = Just 163, fillAndKill = False}
+OrderBook {buyQueue = [LimitOrder {oid = 2, brid = 10, shid = 3, price = 778, quantity = 964, side = Buy, minQty = Just 898, fillAndKill = False}], sellQueue = [LimitOrder {oid = 8, brid = 7, shid = 4, price = 131, quantity = 908, side = Sell, minQty = Just 475, fillAndKill = False}]}
+
+*Main> quickCheck prop_tradePriceCompareWithHeads4
+*** Failed! Falsified (after 1 test):  
+LimitOrder {oid = 6, brid = 2, shid = 4, price = 831, quantity = 759, side = Buy, minQty = Just 722, fillAndKill = False}
+OrderBook {buyQueue = [LimitOrder {oid = 7, brid = 8, shid = 4, price = 710, quantity = 247, side = Buy, minQty = Just 14, fillAndKill = False}], sellQueue = [LimitOrder {oid = 2, brid = 1, shid = 6, price = 639, quantity = 351, side = Sell, minQty = Just 38, fillAndKill = False}]}
