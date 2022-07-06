@@ -151,7 +151,7 @@ prop_remainQuantitySumCompare_check newOrder orderBook =
     where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
 
 
--- check if heads of sell queue and buy queue can be matched or not --
+-- Heads of sell queue and buy queue can be matched or not property --
 
 -- 1. Auxiliary functions
 canOrdersBeMatched :: Order -> Order -> Bool
