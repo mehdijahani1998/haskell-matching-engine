@@ -111,6 +111,9 @@ instance Arbitrary Trade where
         Positive sellerBrId <- arbitrary
         return $ Trade priceTraded quantityTraded buyId sellId buyerShId buyerBrId sellerShId sellerBrId
 
+-- Conservation of quantity property --
+
+-- 1. Auxiliary functions
 getTradesQuantitySum :: [Trade] -> Int
 getTradesQuantitySum [] = 0
 getTradesQuantitySum [t] = quantityTraded t
@@ -124,18 +127,19 @@ getOrderQueueQuantitySum (ord:ob) = quantity ord + getOrderQueueQuantitySum ob
 getOrderBookQuantitySum :: OrderBook -> Int
 getOrderBookQuantitySum ob = getOrderQueueQuantitySum (buyQueue ob) + getOrderQueueQuantitySum (sellQueue ob)
 
+orderBookNotNull :: OrderBook -> Bool
+orderBookNotNull ob = not (null (sellQueue ob) || null (buyQueue ob))
 
+-- 2. Property check functions
 quantitySumEquityCheck :: Order -> OrderBook -> Bool
 quantitySumEquityCheck newOrder orderBook = quantity newOrder + getOrderBookQuantitySum orderBook == getOrderBookQuantitySum remainOrderBook + 2 * getTradesQuantitySum trades
     where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
 
-
-orderBookNotNull :: OrderBook -> Bool
-orderBookNotNull ob = not (null (sellQueue ob) || null (buyQueue ob))
-
 prop_quantitySumEqual_checkClassified :: Order -> OrderBook -> Property
 prop_quantitySumEqual_checkClassified newOrder orderBook = orderBookNotNull orderBook ==> quantitySumEquityCheck newOrder orderBook
 
+
+-- miscellaneous properties tests related to quantity
 prop_tradesQuantitySum_check :: Order -> OrderBook -> Bool
 prop_tradesQuantitySum_check newOrder orderBook =
     quantity newOrder >= getTradesQuantitySum trades
@@ -147,6 +151,9 @@ prop_remainQuantitySumCompare_check newOrder orderBook =
     where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
 
 
+-- check if heads of sell queue and buy queue can be matched or not --
+
+-- 1. Auxiliary functions
 canOrdersBeMatched :: Order -> Order -> Bool
 canOrdersBeMatched bord sord
     | side bord == side sord = False
@@ -164,8 +171,10 @@ canHeadsMatchBefore orderBook = not $ canOrdersBeMatched buyHead sellHead
     where buyHead = head $ buyQueue orderBook
           sellHead = head $ sellQueue orderBook
 
+-- 2. Property check function
 prop_canHeadsMatch :: Order -> OrderBook -> Property
 prop_canHeadsMatch newOrder orderBook = orderBookNotNull orderBook && canHeadsMatchBefore orderBook ==> canHeadsMatchAfter newOrder orderBook
+
 
 main :: IO()
 main = do
