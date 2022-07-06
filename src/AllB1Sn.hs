@@ -124,17 +124,6 @@ getOrderQueueQuantitySum (ord:ob) = quantity ord + getOrderQueueQuantitySum ob
 getOrderBookQuantitySum :: OrderBook -> Int
 getOrderBookQuantitySum ob = getOrderQueueQuantitySum (buyQueue ob) + getOrderQueueQuantitySum (sellQueue ob)
 
-prop_valueTraded trade = priceTraded trade <= valueTraded trade
-
-prop_quantitySum_check :: Order -> OrderBook -> Bool
-prop_quantitySum_check newOrder orderBook =
-    quantity newOrder >= getTradesQuantitySum trades
-    where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
-
-prop_quantitySumEqual_check :: Order -> OrderBook -> Bool
-prop_quantitySumEqual_check newOrder orderBook =
-    quantity newOrder + getOrderBookQuantitySum orderBook >= getOrderBookQuantitySum remainOrderBook
-    where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
 
 quantitySumEquityCheck :: Order -> OrderBook -> Bool
 quantitySumEquityCheck newOrder orderBook = quantity newOrder + getOrderBookQuantitySum orderBook == getOrderBookQuantitySum remainOrderBook + 2 * getTradesQuantitySum trades
@@ -147,16 +136,16 @@ orderBookNotNull ob = not (null (sellQueue ob) || null (buyQueue ob))
 prop_quantitySumEqual_checkClassified :: Order -> OrderBook -> Property
 prop_quantitySumEqual_checkClassified newOrder orderBook = orderBookNotNull orderBook ==> quantitySumEquityCheck newOrder orderBook
 
-prop_dummyQuantity_check :: Order -> Bool
-prop_dummyQuantity_check newOrder = Just (quantity newOrder) >= minQty newOrder
+prop_tradesQuantitySum_check :: Order -> OrderBook -> Bool
+prop_tradesQuantitySum_check newOrder orderBook =
+    quantity newOrder >= getTradesQuantitySum trades
+    where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
 
-prop_dummyQuantity_check2 :: OrderBook -> Bool
-prop_dummyQuantity_check2 orderBook = not (any prop_dummyQuantity_check (buyQueue orderBook))
+prop_remainQuantitySumCompare_check :: Order -> OrderBook -> Bool
+prop_remainQuantitySumCompare_check newOrder orderBook =
+    quantity newOrder + getOrderBookQuantitySum orderBook >= getOrderBookQuantitySum remainOrderBook
+    where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
 
--- tradesPriceLessThanOrder :: Order -> OrderBook -> Bool
--- tradesPriceLessThanOrder newOrder orderBook = 
---     where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
---           trades_prices = [priceTraded trd | trd <- trades, ]
 
 canOrdersBeMatched :: Order -> Order -> Bool
 canOrdersBeMatched bord sord
@@ -165,14 +154,19 @@ canOrdersBeMatched bord sord
     | price bord < price sord = False
     | otherwise = True
 
-canHeadsMatch :: Order -> OrderBook -> Bool
-canHeadsMatch newOrder orderBook = not $ canOrdersBeMatched buyHead sellHead
+canHeadsMatchAfter :: Order -> OrderBook -> Bool
+canHeadsMatchAfter newOrder orderBook = not $ canOrdersBeMatched buyHead sellHead
     where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
           buyHead = head $ buyQueue remainOrderBook
           sellHead = head $ sellQueue remainOrderBook
 
+canHeadsMatchBefore :: OrderBook -> Bool
+canHeadsMatchBefore orderBook = not $ canOrdersBeMatched buyHead sellHead
+    where buyHead = head $ buyQueue orderBook
+          sellHead = head $ sellQueue orderBook
+
 prop_canHeadsMatch :: Order -> OrderBook -> Property
-prop_canHeadsMatch newOrder orderBook = orderBookNotNull orderBook ==> canHeadsMatch newOrder orderBook
+prop_canHeadsMatch newOrder orderBook = orderBookNotNull orderBook && canHeadsMatchBefore orderBook ==> canHeadsMatchAfter newOrder orderBook
 
 
 main :: IO()
