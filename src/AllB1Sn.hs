@@ -150,12 +150,11 @@ prop_remainQuantitySumCompare_check newOrder orderBook =
 canOrdersBeMatched :: Order -> Order -> Bool
 canOrdersBeMatched bord sord
     | side bord == side sord = False
-    | shid bord /= shid sord = False
     | price bord < price sord = False
     | otherwise = True
 
 canHeadsMatchAfter :: Order -> OrderBook -> Bool
-canHeadsMatchAfter newOrder orderBook = not $ canOrdersBeMatched buyHead sellHead
+canHeadsMatchAfter newOrder orderBook = orderBookNotNull remainOrderBook && not (canOrdersBeMatched buyHead sellHead)
     where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
           buyHead = head $ buyQueue remainOrderBook
           sellHead = head $ sellQueue remainOrderBook
@@ -168,7 +167,7 @@ canHeadsMatchBefore orderBook = not $ canOrdersBeMatched buyHead sellHead
 prop_canHeadsMatch :: Order -> OrderBook -> Property
 prop_canHeadsMatch newOrder orderBook = orderBookNotNull orderBook && canHeadsMatchBefore orderBook ==> canHeadsMatchAfter newOrder orderBook
 
-
 main :: IO()
 main = do
     putStrLn "Hello, what's your name?"
+

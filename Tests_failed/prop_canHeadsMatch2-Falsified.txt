@@ -1,0 +1,10 @@
+*Main> quickCheck prop_canHeadsMatch 
+
+*** Failed! Falsified (after 15 tests): 
+
+LimitOrder {oid = 1, brid = 1, shid = 9, price = 48, quantity = 898, side = Sell, minQty = Just 539, fillAndKill = False}
+
+OrderBook {
+buyQueue = [LimitOrder {oid = 9, brid = 1, shid = 2, price = 234, quantity = 401, side = Buy, minQty = Just 212, fillAndKill = False},LimitOrder {oid = 3, brid = 9, shid = 5, price = 595, quantity = 695, side = Buy, minQty = Just 592, fillAndKill = False},LimitOrder {oid = 8, brid = 7, shid = 6, price = 737, quantity = 699, side = Buy, minQty = Just 256, fillAndKill = False}], 
+
+sellQueue = [LimitOrder {oid = 9, brid = 9, shid = 8, price = 379, quantity = 601, side = Sell, minQty = Just 79, fillAndKill = False},LimitOrder {oid = 4, brid = 9, shid = 9, price = 217, quantity = 224, side = Sell, minQty = Just 5, fillAndKill = False},LimitOrder {oid = 2, brid = 7, shid = 4, price = 759, quantity = 909, side = Sell, minQty = Just 830, fillAndKill = False},LimitOrder {oid = 3, brid = 4, shid = 2, price = 441, quantity = 158, side = Sell, minQty = Just 95, fillAndKill = False},LimitOrder {oid = 6, brid = 7, shid = 9, price = 746, quantity = 616, side = Sell, minQty = Just 616, fillAndKill = False},LimitOrder {oid = 9, brid = 3, shid = 8, price = 840, quantity = 828, side = Sell, minQty = Just 181, fillAndKill = False},LimitOrder {oid = 1, brid = 2, shid = 1, price = 119, quantity = 805, side = Sell, minQty = Just 692, fillAndKill = False},LimitOrder {oid = 9, brid = 9, shid = 4, price = 829, quantity = 988, side = Sell, minQty = Just 10, fillAndKill = False},LimitOrder {oid = 5, brid = 1, shid = 2, price = 646, quantity = 226, side = Sell, minQty = Nothing, fillAndKill = False},LimitOrder {oid = 6, brid = 1, shid = 10, price = 291, quantity = 802, side = Sell, minQty = Just 546, fillAndKill = False}]}
