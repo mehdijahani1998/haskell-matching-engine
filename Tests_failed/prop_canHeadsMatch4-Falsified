@@ -1,0 +1,11 @@
+*Main> quickCheck prop_canHeadsMatch
+
+*** Failed! Falsified (after 1 test):  
+
+LimitOrder {oid = 10, brid = 6, shid = 10, price = 533, quantity = 996, side = Sell, minQty = Just 697, fillAndKill = False}
+
+OrderBook {
+
+buyQueue = [LimitOrder {oid = 5, brid = 10, shid = 3, price = 954, quantity = 734, side = Buy, minQty = Just 391, fillAndKill = False}], 
+
+sellQueue = [LimitOrder {oid = 2, brid = 5, shid = 1, price = 29, quantity = 630, side = Sell, minQty = Just 49, fillAndKill = False}]}

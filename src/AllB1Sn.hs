@@ -161,87 +161,45 @@ prop_remainQuantitySumCompare_check newOrder orderBook =
 -- Heads of sell queue and buy queue can be matched or not property --
 
 -- 1. Auxiliary functions
-canOrdersBeMatched :: Order -> Order -> Bool
-canOrdersBeMatched bord sord
-    | side bord == side sord = False
-    | price bord < price sord = False
-    | otherwise = True
+ordersCantBeMatched :: Order -> Order -> Bool
+ordersCantBeMatched bord sord
+    | side bord == side sord = True
+    | price bord < price sord = True
+    | otherwise = False
 
 canHeadsMatchAfter :: Order -> OrderBook -> Bool
-canHeadsMatchAfter newOrder orderBook = orderBookNotNull remainOrderBook && not (canOrdersBeMatched buyHead sellHead)
+canHeadsMatchAfter newOrder orderBook = orderBookNotNull remainOrderBook
+                                        && ordersCantBeMatched buyHead sellHead
+                                        || null (buyQueue remainOrderBook)
+                                        || null (sellQueue remainOrderBook)
     where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
           buyHead = head $ buyQueue remainOrderBook
           sellHead = head $ sellQueue remainOrderBook
 
 canHeadsMatchBefore :: OrderBook -> Bool
-canHeadsMatchBefore orderBook = not $ canOrdersBeMatched buyHead sellHead
+canHeadsMatchBefore orderBook = ordersCantBeMatched buyHead sellHead
     where buyHead = head $ buyQueue orderBook
           sellHead = head $ sellQueue orderBook
 
 -- 2. Property check function
 prop_canHeadsMatch :: Order -> OrderBook -> Property
-prop_canHeadsMatch newOrder orderBook = orderBookNotNull orderBook && canHeadsMatchBefore orderBook ==> canHeadsMatchAfter newOrder orderBook
-
+prop_canHeadsMatch newOrder orderBook = orderBookNotNull orderBook ==> canHeadsMatchAfter newOrder orderBook
 
 -- Compare trades price with sell and buy queue --
 
-tradePriceMoreThanBothHeads :: Order -> OrderBook -> Bool
-tradePriceMoreThanBothHeads newOrder orderBook = headTradePrice >= buyHeadPrice && headTradePrice >= sellHeadPrice
+tradePriceMoreThanBuyLessThanSell :: Order -> OrderBook -> Bool
+tradePriceMoreThanBuyLessThanSell newOrder orderBook = if side newOrder == Buy then headTradePrice <= sellHeadPrice else headTradePrice >= buyHeadPrice
     where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
-          headTradePrice = if null trades then 0 else priceTraded (head trades)
+          headTradePrice = if null trades then 0 else priceTraded (last trades)
           buyHeadPrice = if null $ buyQueue remainOrderBook then 0 else price (head $ buyQueue remainOrderBook)
           sellHeadPrice = if null $ sellQueue remainOrderBook then 0 else price (head $ sellQueue remainOrderBook)
-
-tradePriceLessThanBothHeads :: Order -> OrderBook -> Bool
-tradePriceLessThanBothHeads newOrder orderBook = headTradePrice <= buyHeadPrice && headTradePrice <= sellHeadPrice
-    where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
-          headTradePrice = if null trades then 0 else priceTraded (head trades)
-          buyHeadPrice = if null $ buyQueue remainOrderBook then 0 else price (head $ buyQueue remainOrderBook)
-          sellHeadPrice = if null $ sellQueue remainOrderBook then 0 else price (head $ sellQueue remainOrderBook)
-
-tradePriceLessThanBuyMoreThanSell :: Order -> OrderBook -> Bool
-tradePriceLessThanBuyMoreThanSell newOrder orderBook = headTradePrice <= buyHeadPrice && headTradePrice >= sellHeadPrice
-    where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
-          headTradePrice = if null trades then 0 else priceTraded (head trades)
-          buyHeadPrice = if null $ buyQueue remainOrderBook then 0 else price (head $ buyQueue remainOrderBook)
-          sellHeadPrice = if null $ sellQueue remainOrderBook then 0 else price (head $ sellQueue remainOrderBook)
-
-tradePriceLessThanSellMoreThanBuy :: Order -> OrderBook -> Bool
-tradePriceLessThanSellMoreThanBuy newOrder orderBook = headTradePrice >= buyHeadPrice && headTradePrice <= sellHeadPrice
-    where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
-          headTradePrice = if null trades then 0 else priceTraded (head trades)
-          buyHeadPrice = if null $ buyQueue remainOrderBook then 0 else price (head $ buyQueue remainOrderBook)
-          sellHeadPrice = if null $ sellQueue remainOrderBook then 0 else price (head $ sellQueue remainOrderBook)
-
-
-prop_tradePriceCompareWithHeads_mbms :: Order -> OrderBook -> Property
-prop_tradePriceCompareWithHeads_mbms newOrder orderBook = orderBookNotNull orderBook &&
-                                                      orderBookNotNull remainOrderBook &&
-                                                      not (null trades)
-                                                      ==> collect (length trades) $ tradePriceMoreThanBothHeads newOrder orderBook
-    where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
-
-prop_tradePriceCompareWithHeads_lbls :: Order -> OrderBook -> Property
-prop_tradePriceCompareWithHeads_lbls newOrder orderBook = orderBookNotNull orderBook &&
-                                                      orderBookNotNull remainOrderBook &&
-                                                      not (null trades)
-                                                      ==> tradePriceLessThanBothHeads newOrder orderBook
-    where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
-
-prop_tradePriceCompareWithHeads_lbms :: Order -> OrderBook -> Property
-prop_tradePriceCompareWithHeads_lbms newOrder orderBook = orderBookNotNull orderBook &&
-                                                      orderBookNotNull remainOrderBook &&
-                                                      not (null trades)
-                                                      ==> tradePriceLessThanBuyMoreThanSell newOrder orderBook
-    where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
 
 prop_tradePriceCompareWithHeads_mbls :: Order -> OrderBook -> Property
 prop_tradePriceCompareWithHeads_mbls newOrder orderBook = orderBookNotNull orderBook &&
                                                       orderBookNotNull remainOrderBook &&
                                                       not (null trades)
-                                                      ==> tradePriceLessThanSellMoreThanBuy newOrder orderBook
+                                                      ==> tradePriceMoreThanBuyLessThanSell newOrder orderBook
     where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
-
 
 main :: IO()
 main = do

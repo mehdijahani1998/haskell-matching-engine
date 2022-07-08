@@ -1,0 +1,8 @@
+*Main> quickCheck prop_canHeadsMatch 
+*** Failed! (after 1 test):                            
+Exception:
+  Assertion failed
+  CallStack (from HasCallStack):
+    assert, called at ./Domain/ME.hs:227:5 in main:Domain.ME
+LimitOrder {oid = 4, brid = 2, shid = 3, price = 530, quantity = 781, side = Sell, minQty = Just 625, fillAndKill = False}
+OrderBook {buyQueue = [LimitOrder {oid = 3, brid = 9, shid = 10, price = 994, quantity = 549, side = Buy, minQty = Just 103, fillAndKill = False}], sellQueue = [LimitOrder {oid = 8, brid = 10, shid = 2, price = 875, quantity = 580, side = Sell, minQty = Just 569, fillAndKill = False}]}

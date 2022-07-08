@@ -1,0 +1,21 @@
+*ME> quickCheck prop_canHeadsMatch 
+
+*** Failed! Falsifiable (after 3 tests): 
+
+input:
+
+LimitOrder 10 804 820 Buy (Just 127)
+
+OrderBook 
+
+buyQ = [LimitOrder 1 340 844 Buy (Just 789), LimitOrder 8 183 310 Buy (Just 202)]
+
+sellQ = [LimitOrder 1 141 830 Sell (Just 517)]
+
+output:
+
+(OrderBook 
+
+{buyQueue = [LimitOrder {oid = 1, price = 340, quantity = 844, side = Buy, minQty = Just 789},LimitOrder {oid = 8, price = 183, quantity = 310, side = Buy, minQty = Just 202}], 
+
+sellQueue = [LimitOrder {oid = 1, price = 141, quantity = 10, side = Sell, minQty = Just 517}]},[Trade {priceTraded = 141, quantityTraded = 820, buyId = 10, sellId = 1}])

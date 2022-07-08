@@ -1,0 +1,11 @@
+*ME> quickCheck prop_tradePriceCompareWithHeads_mbls 
+
+*** Failed! Falsifiable (after 3 tests):  
+
+LimitOrder 1 818 834 Buy (Just 250)
+
+OrderBook 
+
+buyQueue = [LimitOrder 10 948 898 Buy (Just 1)]
+
+sellQueue = [LimitOrder 10 817 337 Sell (Just 278), LimitOrder 3 279 911 Sell (Just 869)]

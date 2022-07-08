@@ -1,0 +1,23 @@
+*Main> quickCheck prop_canHeadsMatch 
+
+*** Failed! Falsified (after 5 tests):  
+
+input:
+
+LimitOrder  2  3  7  251  997  Sell  (Just 193)  False
+
+OrderBook
+
+buyQ = [LimitOrder  3  8  3  618  460  Buy  (Just 134)  False, LimitOrder  9  6  8  935  590  Buy  (Just 20)  False, LimitOrder  7  5  7  675  252  Buy  (Just 84)  False, LimitOrder  10  5  10  691  750  Buy  (Just 206)  False] 
+
+sellQ = [LimitOrder  9  5  1  46  873  Sell  (Just 312)  False, LimitOrder  7  5  9  104  894  Sell  (Just 64)  False, LimitOrder  8  5  6  304  760  Sell  (Just 387)  False]
+
+output:
+
+(OrderBook 
+
+{buyQueue = [LimitOrder {oid = 9, brid = 6, shid = 8, price = 935, quantity = 53, side = Buy, minQty = Just 20, fillAndKill = False},LimitOrder {oid = 7, brid = 5, shid = 7, price = 675, quantity = 252, side = Buy, minQty = Just 84, fillAndKill = False},LimitOrder {oid = 10, brid = 5, shid = 10, price = 691, quantity = 750, side = Buy, minQty = Just 206, fillAndKill = False}], 
+
+sellQueue = [LimitOrder {oid = 9, brid = 5, shid = 1, price = 46, quantity = 873, side = Sell, minQty = Just 312, fillAndKill = False},LimitOrder {oid = 7, brid = 5, shid = 9, price = 104, quantity = 894, side = Sell, minQty = Just 64, fillAndKill = False},LimitOrder {oid = 8, brid = 5, shid = 6, price = 304, quantity = 760, side = Sell, minQty = Just 387, fillAndKill = False}]},
+
+[Trade {priceTraded = 618, quantityTraded = 460, buyId = 3, sellId = 2, buyerShId = 3, buyerBrId = 8, sellerShId = 7, sellerBrId = 3},Trade {priceTraded = 935, quantityTraded = 537, buyId = 9, sellId = 2, buyerShId = 8, buyerBrId = 6, sellerShId = 7, sellerBrId = 3}])
