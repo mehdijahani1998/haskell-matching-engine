@@ -13,7 +13,7 @@ import Domain.MEService
 import Test.QuickCheck
 import Decorators.OrderHandler (matchNewOrder', matchNewOrder)
 import Data.Ord (comparing)
-import Data.List (sortBy)
+import Data.List (sortBy, sortOn)
 
 
 -- instance Arbitrary Side where
@@ -89,10 +89,10 @@ genRandomOrder = do --Positive oid <- arbitrary
                     return (LimitOrder oid brid shid price quantity side minQty fillAndKill)
 
 genBuyQueue :: Gen OrderQueue
-genBuyQueue = listOf genOnlyBuyOrder
+genBuyQueue = listOf genOnlyBuyOrder `suchThat` isBuyQueueSorted
 
 genSellQueue :: Gen OrderQueue
-genSellQueue = listOf genOnlySellOrder
+genSellQueue = listOf genOnlySellOrder `suchThat` isSellQueueSorted
 
 genOrderBook :: Gen OrderBook
 genOrderBook = do buyQ <- genBuyQueue
@@ -101,9 +101,20 @@ genOrderBook = do buyQ <- genBuyQueue
                   return (OrderBook buyQ sellQ)
 
 getOrderPrice :: Order -> Price
-getOrderPrice ord = price ord
+getOrderPrice = price
 
-sortBuyQueue = sortBy (comparing getOrderPrice)
+sortOrderQueue :: [Order] -> [Order]
+sortOrderQueue = sortOn getOrderPrice
+
+isSellQueueSorted :: OrderQueue -> Bool
+isSellQueueSorted sellQ = sellQ == sortOrderQueue sellQ
+
+isBuyQueueSorted :: OrderQueue -> Bool
+isBuyQueueSorted buyQ = buyQ == reverse (sortOrderQueue buyQ)
+
+prop_isOrderBookSorted :: OrderBook -> Bool
+prop_isOrderBookSorted ob = isSellQueueSorted (sellQueue  ob) && isBuyQueueSorted (buyQueue ob)
+
 
 instance Arbitrary Trade where
 
