@@ -12,6 +12,8 @@ import Domain.ME
 import Domain.MEService
 import Test.QuickCheck
 import Decorators.OrderHandler (matchNewOrder', matchNewOrder)
+import Data.Ord (comparing)
+import Data.List (sortBy)
 
 
 -- instance Arbitrary Side where
@@ -95,8 +97,13 @@ genSellQueue = listOf genOnlySellOrder
 genOrderBook :: Gen OrderBook
 genOrderBook = do buyQ <- genBuyQueue
                   sellQ <- genSellQueue
+                  --let buyQ2 = sortBuyQueue buyQ
                   return (OrderBook buyQ sellQ)
 
+getOrderPrice :: Order -> Price
+getOrderPrice ord = price ord
+
+sortBuyQueue = sortBy (comparing getOrderPrice)
 
 instance Arbitrary Trade where
 
