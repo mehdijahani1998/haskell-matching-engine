@@ -108,7 +108,7 @@ genRandomOrder = do --Positive oid <- arbitrary
 -- *** --             -- *** --
 
 genOrderList :: Gen OrderList
-genOrderList = listOf genRandomOrder `suchThat` orderListLen 
+genOrderList = listOf genRandomOrder `suchThat` orderListLen
 
 orderListLen :: OrderList -> Bool
 orderListLen ordList = length ordList >= 6
@@ -135,22 +135,24 @@ genOrderBook = do buyQ <- genBuyQueue
 
 matchListOfOrders :: OrderList -> OrderBook -> [Trade] -> (OrderBook, [Trade])
 matchListOfOrders [] ob trds = (ob, trds)
-matchListOfOrders [ord] ob trds = let (newOb, newTrds) = matchNewOrder' ord ob 
+matchListOfOrders [ord] ob trds = let (newOb, newTrds) = matchNewOrder' ord ob
                                   in (newOb, trds ++ newTrds)
 matchListOfOrders (ord:remOrdsList) ob trds = let (newOb, newTrds) = matchNewOrder' ord ob
                                                   updatedTrds = trds ++ newTrds
-                                              in matchListOfOrders remOrdsList newOb updatedTrds 
-createObAndTrd :: OrderBook -> [Trade] -> (OrderBook, [Trade])
-createObAndTrd ob trd = (ob, trd)
-
-matchListOfOrders' :: OrderList -> OrderBook -> [Trade] -> (OrderBook, [Trade])
-matchListOfOrders' [] ob trds = (ob, trds)
-matchListOfOrders' [ord] ob trds = do 
-                            (newOb, newTrds) <- matchNewOrder ord ob
-                            createObAndTrd newOb newTrds
-matchListOfOrders' (ord:remOrdsList) ob trds = let (newOb, newTrds) = matchNewOrder' ord ob
-                                                   updatedTrds = trds ++ newTrds
                                               in matchListOfOrders remOrdsList newOb updatedTrds
+
+
+matchListOfOrders' :: OrderList -> OrderBook -> [Trade] -> Coverage (OrderBook, [Trade])
+matchListOfOrders' [] ob trds = (ob, trds) `covers` "1"
+matchListOfOrders' [ord] ob trds = do
+                            (newOb, newTrds) <- matchNewOrder ord ob
+                            (newOb, newTrds) `covers` "1"
+matchListOfOrders' (ord:remOrdsList) ob trds = do
+                            let (newOb, newTrds) = matchNewOrder' ord ob
+                            let updatedTrds = trds ++ newTrds
+                            (finalOb, finalTrds) <- matchListOfOrders' remOrdsList newOb updatedTrds
+                            (finalOb, finalTrds) `covers` "1"
+
 
 -- *** --                                                         -- *** --
 -- These generators are used to generate sorted buy queue and sell queue -- 
@@ -225,7 +227,7 @@ prop_quantitySumEqual_Classified newOrder orderBook = orderBookNotNull orderBook
 -- 3. Property check functions for new case of generators
 
 newQuantitySumEquityCheck :: Order -> OrderList -> Bool
-newQuantitySumEquityCheck newOrder newOrderList = quantity newOrder + getOrderBookQuantitySum organicOrderBook == 
+newQuantitySumEquityCheck newOrder newOrderList = quantity newOrder + getOrderBookQuantitySum organicOrderBook ==
                                                   getOrderBookQuantitySum finalOrderBook + 2 * getTradesQuantitySum trades
     where (organicOrderBook, organicTrades) = matchListOfOrders newOrderList primeOb primeTrds
           primeOb = OrderBook [] []
@@ -233,7 +235,7 @@ newQuantitySumEquityCheck newOrder newOrderList = quantity newOrder + getOrderBo
           (finalOrderBook, trades) = matchNewOrder' newOrder organicOrderBook
 
 prop_newQuantitySumEqual_Classified:: Order -> OrderList -> Property
-prop_newQuantitySumEqual_Classified newOrder newOrderList = collect (length trades) $ 
+prop_newQuantitySumEqual_Classified newOrder newOrderList = collect (length trades) $
                                                             newQuantitySumEquityCheck newOrder newOrderList
     where (organicOrderBook, organicTrades) = matchListOfOrders newOrderList primeOb primeTrds
           primeOb = OrderBook [] []
@@ -289,7 +291,7 @@ prop_canHeadsMatch newOrder orderBook = orderBookNotNull orderBook ==> canHeadsM
 -- 3. Property check functions for new case
 
 prop_newCanHeadsMatch :: Order -> OrderList -> Property
-prop_newCanHeadsMatch newOrder newOrderList = collect (length trades) $ 
+prop_newCanHeadsMatch newOrder newOrderList = collect (length trades) $
                                               canHeadsMatchGeneral finalOrderBook
     where (organicOrderBook, organicTrades) = matchListOfOrders newOrderList primeOb primeTrds
           primeOb = OrderBook [] []
@@ -312,8 +314,8 @@ tradePriceMoreThanBuyLessThanSell' :: Trade -> OrderBook -> Side -> Bool
 tradePriceMoreThanBuyLessThanSell' trd ob side
     | null (sellQueue ob) && side == Buy = True
     | null (buyQueue ob) && side == Sell = True
-    | otherwise = if side == Buy 
-                  then tradePrice <= sellHeadPrice 
+    | otherwise = if side == Buy
+                  then tradePrice <= sellHeadPrice
                   else tradePrice >= buyHeadPrice
     where buyHeadPrice = price (head $ buyQueue ob)
           sellHeadPrice = price (head $ sellQueue ob)
@@ -327,14 +329,14 @@ prop_tradePriceCompareWithHeads_mbls newOrder orderBook = orderBookNotNull order
     where (remainOrderBook, trades) = matchNewOrder' newOrder orderBook
 
 prop_newTradePriceCompareWithHeads_Classified :: Order -> OrderList -> Property
-prop_newTradePriceCompareWithHeads_Classified newOrder newOrderList = collect (length trades) $ 
-                                                                       null trades || 
+prop_newTradePriceCompareWithHeads_Classified newOrder newOrderList = collect (length trades) $
+                                                                       null trades ||
                                                                        tradePriceMoreThanBuyLessThanSell' lastTrade finalOrderBook lastSide
     where (organicOrderBook, organicTrades) = matchListOfOrders newOrderList primeOb primeTrds
           primeOb = OrderBook [] []
           primeTrds = []
           (finalOrderBook, trades) = matchNewOrder' newOrder organicOrderBook
-          lastTrade = last trades 
+          lastTrade = last trades
           lastSide = side newOrder
 
 main :: IO()
