@@ -1,0 +1,8 @@
+*Main> quickCheck prop_newQuantitySumEqual_Classified
+*** Failed! (after 2 tests):                                            
+Exception:
+  Assertion failed
+  CallStack (from HasCallStack):
+    assert, called at ./Domain/ME.hs:227:5 in main:Domain.ME
+LimitOrder {oid = 1, brid = 8, shid = 3, price = 825, quantity = 919, side = Buy, minQty = Just 53, fillAndKill = False}
+[LimitOrder {oid = 6, brid = 10, shid = 10, price = 383, quantity = 625, side = Sell, minQty = Just 302, fillAndKill = False}]
